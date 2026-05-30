@@ -862,6 +862,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .hours-link:hover{text-decoration:underline}
   .empty{padding:24px 6px;color:var(--ink-soft);font-size:.92rem;text-align:center}
   #sortnear{cursor:pointer}
+  .protips-chip{border-color:var(--amber);color:#9a5a12}
+  .protips-chip.active{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .pro-note{background:linear-gradient(180deg,#FFF7E8,#FDEFD2);border:1.5px solid #F0D9A8;
+    border-radius:14px;padding:13px 16px;font-size:.92rem;color:#6b4e1f;line-height:1.5}
+  .pro-note b{font-family:'Fraunces',serif;font-weight:600;color:#5a3d12}
+  .pro-star{font-size:.95em}
 
   .map-fallback{background:#fff;border:1.5px dashed var(--line);border-radius:20px;padding:26px;
     font-size:.92rem;color:var(--ink-soft);line-height:1.6}
@@ -895,6 +901,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <input id="search" type="text" placeholder="Søg efter sted eller gade…">
   </div>
   <div class="chips" id="chips"></div>
+  <button id="protips" class="chip protips-chip">🏆 Pro tips</button>
   <button id="sortnear" class="chip" hidden>📍 Sortér nærmest</button>
   <div class="opennow" id="opennow"><span class="switch"></span> Kun åbne nu</div>
 </div>
@@ -944,7 +951,7 @@ const LAST_UPDATED = '30. maj 2026';
 /* hours[] indexed by JS getDay(): 0=Søn,1=Man … 6=Lør. [openMin,closeMin] or null=lukket.
    price: 'free' | 'paid' (udeladt = ukendt). indoor: true for inde-steder. pusle: true kun hvor kendt. */
 const PLACES = [
-  {n:'Legeplads – Steenwinkelsvej', cat:'legeplads', lat:55.6837593, lng:12.5486113, adr:'Steenwinkelsvej 20, Frederiksberg',
+  {n:'Legeplads – Steenwinkelsvej', cat:'legeplads', pro:true, lat:55.6837593, lng:12.5486113, adr:'Steenwinkelsvej 20, Frederiksberg',
    note:'Lille, hyggelig legeplads. Fin til et hurtigt stop.', type:'outdoor', price:'free'},
   {n:'Little House', cat:'indendoers', lat:55.6833376, lng:12.5474176, adr:'Rosenørns Allé 60, Frederiksberg',
    note:'Indendørs legecafé — endnu ikke prøvet. Bedst for de mindste (ca. 0–3 år). Sko-frit gulv, så babyer kan kravle. Bemærk: lukket lørdag.',
@@ -959,7 +966,7 @@ const PLACES = [
   {n:'Minigolf – Hans Tavsens Park', cat:'sport', lat:55.6900579, lng:12.5460078, adr:'Hans Tavsens Gade 40, København N',
    note:'Minigolf + trampoliner op mod Nørrebro Park Skole. Kan være lidt slidt eller lukket — tjek før I tager afsted.',
    rating:2.7, rc:3, price:'free', hours:[null,[600,1080],[600,1080],[600,1080],[600,1080],[600,1080],null]},
-  {n:'Linden – Kapelvej', cat:'legeplads', lat:55.6877746, lng:12.552335, adr:'Kapelvej 36, København N',
+  {n:'Linden – Kapelvej', cat:'legeplads', pro:true, lat:55.6877746, lng:12.552335, adr:'Kapelvej 36, København N',
    note:'Institution — legepladsen er åben i weekenderne, når institutionen er lukket.', type:'outdoor', price:'free'},
   {n:'Flyverlegepladsen – Stefansgade', cat:'legeplads', lat:55.6942562, lng:12.5422289, adr:'Stefansgade 28-30, København N',
    note:'Stor legeplads i Nørrebroparken. Bemandet på hverdage, indendørsområde og smådyr. En af de bedste i byen.',
@@ -967,7 +974,7 @@ const PLACES = [
   {n:'Bemandet legeplads – Wesselsgade', cat:'legeplads', lat:55.6859569, lng:12.5596405, adr:'Wesselsgade 12, København N',
    note:'Bemandet legeplads med trampoliner, hængekøjer og zipline. Toiletter og masser af skygge og bænke.',
    rating:4.3, rc:147, type:'outdoor', price:'free'},
-  {n:'Lege- & boldområde bag Bülowsvejshallen', cat:'sport', lat:55.6823329, lng:12.5451883, adr:'Bülowsvej 34, Frederiksberg',
+  {n:'Lege- & boldområde bag Bülowsvejshallen', cat:'sport', pro:true, lat:55.6823329, lng:12.5451883, adr:'Bülowsvej 34, Frederiksberg',
    note:'Masser af plads bagved — perfekt til at øve løbecykel og lignende. Ikke så mange legeting til de helt små.',
    rating:4.1, rc:128, type:'outdoor', price:'free'},
   {n:'Bemandet legeplads – Ørstedsparken', cat:'legeplads', lat:55.6806166, lng:12.564786, adr:'Nørre Farimagsgade 2, København K',
@@ -977,7 +984,7 @@ const PLACES = [
    note:'Legeplads ved Forum. God plads til klapvogne.', rating:4.3, rc:24, type:'outdoor', price:'free'},
   {n:'Legeplads – Danas Plads', cat:'legeplads', lat:55.6787428, lng:12.553232, adr:'Danas Plads, Frederiksberg',
    note:'Den er nice. Hyggeligt, lille område — fin til de mindste.', rating:4.8, rc:5, type:'outdoor', price:'free'},
-  {n:'Frederiksberg Hovedbibliotek', cat:'bibliotek', lat:55.6807404, lng:12.5303481, adr:'Falkoner Plads 3, Frederiksberg',
+  {n:'Frederiksberg Hovedbibliotek', cat:'bibliotek', pro:true, lat:55.6807404, lng:12.5303481, adr:'Falkoner Plads 3, Frederiksberg',
    note:'Underetagen (-2) er en hel børneetage. Åbent længe og rart at falde til ro i.',
    rating:4.4, rc:173, web:'http://www.biblioteketfrederiksberg.dk/', indoor:true, price:'free',
    hours:[[420,1320],[420,1320],[420,1320],[420,1320],[420,1320],[420,1320],[420,1320]]},
@@ -1004,11 +1011,11 @@ const PLACES = [
    note:'Har lidt legesager til børnene. (Lagkagehuset rundtomkring i kvarteret har det som regel også.)',
    rating:3.6, rc:25, web:'https://emmerys.dk/', indoor:true,
    hours:[[420,1020],[420,1080],[420,1080],[420,1080],[420,1080],[420,1080],[420,1020]]},
-  {n:'Capella – Kapelvej', cat:'legeplads', lat:55.68817, lng:12.552255, adr:'Kapelvej 32, København N',
+  {n:'Capella – Kapelvej', cat:'legeplads', pro:true, lat:55.68817, lng:12.552255, adr:'Kapelvej 32, København N',
    note:'Fritidsklub for Blågårds Skole — udearealerne er åbne for alle, når klubben ikke bruger dem (efter luk og i weekenden). Lille boldbur med fodboldmål og basketkurve, bålhytte og naturlegeplads med forhindringsbane, rutsjebane, rebgynger, legetræhytter, lille trampolin og svævebane. Lige ved Assistens — god skygge fra træerne om sommeren.',
    special:'capella', price:'free',
    web:'https://kvisten-kk.aula.dk/capella/capellas-aabningstider'},
-  {n:'Felt/Megaron – Assistens', cat:'legeplads', lat:55.6911314, lng:12.547944, adr:'Kapelvej 4, Assistens Kirkegård, København N',
+  {n:'Felt/Megaron – Assistens', cat:'legeplads', pro:true, lat:55.6911314, lng:12.547944, adr:'Kapelvej 4, Assistens Kirkegård, København N',
    note:'Et hyggeligt lille legested/kunstværk inde på Assistens. Stenene rokker, hvilket børn synes er sjovt. Fint at lægge vejen forbi, hvis I alligevel er på tur i Assistens.',
    type:'outdoor', price:'free'}
 ];
@@ -1055,19 +1062,20 @@ function walkMin(m){return Math.max(1,Math.round(m/80));} // ~80 m/min = roligt 
 
 /* ---------- State ---------- */
 let activeCats=new Set(Object.keys(CATS));
-let onlyOpen=false, indoorOnly=false, sortNear=false, query='', activeCard=null, mapOK=false, userPos=null;
+let onlyOpen=false, indoorOnly=false, sortNear=false, proOnly=false, query='', activeCard=null, mapOK=false, userPos=null;
 const listEl=document.getElementById('list');
 const countEl=document.getElementById('count');
 const sortBtn=document.getElementById('sortnear');
 
 /* ---------- Render list ---------- */
 function render(){
-  [...listEl.querySelectorAll('.card, .empty')].forEach(c=>c.remove());
+  [...listEl.querySelectorAll('.card, .empty, .pro-note')].forEach(c=>c.remove());
   PLACES.forEach(p=>{
     const st=status(p);
     const match = activeCats.has(p.cat)
       && (!onlyOpen || st.open)
       && (!indoorOnly || p.indoor)
+      && (!proOnly || p.pro)
       && (query==='' || (p.n+' '+p.adr+' '+p.note).toLowerCase().includes(query));
     p._match=match;
     if(p._marker){
@@ -1077,7 +1085,15 @@ function render(){
   });
   let order=PLACES.slice();
   if(sortNear && userPos) order.sort((a,b)=>(a._dist??1e12)-(b._dist??1e12));
+  else if(proOnly) order.sort((a,b)=>(b.pro?1:0)-(a.pro?1:0));
   let shown=0;
+  // pro-tips note at top when filter active
+  if(proOnly){
+    const n=document.createElement('div');
+    n.className='pro-note';
+    n.innerHTML='🏆 <b>Pro tips</b> — vores egne favoritter i kvarteret: små, gode steder, som man nok ikke selv falder over.';
+    listEl.appendChild(n);
+  }
   order.forEach(p=>{
     if(!p._match) return;
     shown++;
@@ -1092,7 +1108,7 @@ function render(){
     card.className='card'; card.style.setProperty('--c',c.color);
     card.innerHTML=`
       <div class="card-top">
-        <h3>${p.n}</h3>
+        <h3>${p.pro?'<span class="pro-star" title="Pro tip">🏆</span> ':''}${p.n}</h3>
         <span class="badge ${st.cls}">${st.txt}</span>
       </div>
       <div class="tag" style="--c:${c.color}">${c.emoji} ${c.label}</div>
@@ -1153,6 +1169,8 @@ document.getElementById('search').addEventListener('input',e=>{query=e.target.va
 const onEl=document.getElementById('opennow');
 onEl.addEventListener('click',()=>{onlyOpen=!onlyOpen;onEl.classList.toggle('on',onlyOpen);render();});
 sortBtn.addEventListener('click',()=>{sortNear=!sortNear;sortBtn.classList.toggle('active',sortNear);render();});
+const proBtn=document.getElementById('protips');
+proBtn.addEventListener('click',()=>{proOnly=!proOnly;proBtn.classList.toggle('active',proOnly);render();});
 
 /* ---------- Mobile tabs ---------- */
 const tabList=document.getElementById('tab-list'), tabMap=document.getElementById('tab-map');
@@ -1251,7 +1269,7 @@ function initMap(){
                 : p.price==='paid'?'<span style="color:#9a5a12;font-weight:700">Betaling</span> · ':'';
     m.bindPopup(`<div class="pop">
       <div class="ptag" style="color:${c.color}">${c.emoji} ${c.label}</div>
-      <h4>${p.n}</h4>
+      <h4>${p.pro?'🏆 ':''}${p.n}</h4>
       <p>${p.note}</p>
       <div class="prow">${price}${p.rating?`★ ${p.rating} · ${p.rc} anm.`:''}</div>
       ${th?`<div class="prow">🕘 ${th} · <a href="${hoursLink(p)}" target="_blank" rel="noopener" style="color:#3E6E8E">aktuelle tider</a></div>`:''}
