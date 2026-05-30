@@ -766,7 +766,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   /* ---------- Layout ---------- */
   .layout{
     max-width:1320px;margin:20px auto 0;padding:0 26px 40px;
-    display:grid;grid-template-columns:400px 1fr;gap:22px;align-items:start;
+    display:grid;grid-template-columns:minmax(380px,460px) 1fr;gap:26px;align-items:start;
   }
   .list{
     display:flex;flex-direction:column;gap:12px;
@@ -778,12 +778,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .card{
     background:#fff;border:1.5px solid var(--line);border-radius:16px;
     padding:15px 16px;cursor:pointer;transition:.18s;position:relative;overflow:hidden;
+    flex-shrink:0;
   }
   .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,#999)}
   .card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--c)}
   .card.active{box-shadow:var(--shadow);border-color:var(--c);background:#FFFDF8}
-  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-  .card h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.12rem;line-height:1.15;letter-spacing:-.01em}
+  .card-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.13rem;line-height:1.25;
+    letter-spacing:-.01em;overflow-wrap:anywhere;hyphens:auto}
+  .card-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px}
   .badge{
     flex-shrink:0;font-size:.68rem;font-weight:700;padding:4px 9px;border-radius:30px;
     letter-spacing:.03em;white-space:nowrap;
@@ -792,7 +794,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .badge.closed{background:rgba(200,99,63,.14);color:#a3431f}
   .badge.outdoor{background:rgba(62,110,142,.12);color:#345b75}
   .badge.info{background:var(--paper-2);color:var(--ink-soft)}
-  .tag{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;color:var(--c);margin-top:8px}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;color:var(--c)}
   .note{margin-top:9px;font-size:.92rem;color:var(--ink-soft)}
   .meta{margin-top:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--ink-soft)}
   .meta .star{color:var(--amber);font-weight:700}
@@ -860,12 +862,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .amenity.dist{color:#357043;background:rgba(79,138,91,.12)}
   .hours-link{color:var(--blue);text-decoration:none;font-weight:600;white-space:nowrap}
   .hours-link:hover{text-decoration:underline}
-  .empty{padding:24px 6px;color:var(--ink-soft);font-size:.92rem;text-align:center}
+  .empty{padding:24px 6px;color:var(--ink-soft);font-size:.92rem;text-align:center;flex-shrink:0}
   #sortnear{cursor:pointer}
   .protips-chip{border-color:var(--amber);color:#9a5a12}
   .protips-chip.active{background:var(--amber);color:#fff;border-color:var(--amber)}
   .pro-note{background:linear-gradient(180deg,#FFF7E8,#FDEFD2);border:1.5px solid #F0D9A8;
-    border-radius:14px;padding:13px 16px;font-size:.92rem;color:#6b4e1f;line-height:1.5}
+    border-radius:14px;padding:13px 16px;font-size:.92rem;color:#6b4e1f;line-height:1.5;flex-shrink:0}
   .pro-note b{font-family:'Fraunces',serif;font-weight:600;color:#5a3d12}
   .pro-star{font-size:.95em}
 
@@ -1107,11 +1109,11 @@ function render(){
     const card=document.createElement('div');
     card.className='card'; card.style.setProperty('--c',c.color);
     card.innerHTML=`
-      <div class="card-top">
-        <h3>${p.pro?'<span class="pro-star" title="Pro tip">🏆</span> ':''}${p.n}</h3>
+      <h3 class="card-title">${p.pro?'<span class="pro-star" title="Pro tip">🏆</span> ':''}${p.n}</h3>
+      <div class="card-sub">
+        <span class="tag" style="--c:${c.color}">${c.emoji} ${c.label}</span>
         <span class="badge ${st.cls}">${st.txt}</span>
       </div>
-      <div class="tag" style="--c:${c.color}">${c.emoji} ${c.label}</div>
       <div class="note">${p.note}</div>
       ${amen.length?`<div class="amenities">${amen.join('')}</div>`:''}
       <div class="meta">
