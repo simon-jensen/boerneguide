@@ -1003,13 +1003,32 @@ const PLACES = [
   {n:'Emmerys – Rantzausgade', cat:'cafe', lat:55.6869172, lng:12.5491733, adr:'Rantzausgade 36, København N',
    note:'Har lidt legesager til børnene. (Lagkagehuset rundtomkring i kvarteret har det som regel også.)',
    rating:3.6, rc:25, web:'https://emmerys.dk/', indoor:true,
-   hours:[[420,1020],[420,1080],[420,1080],[420,1080],[420,1080],[420,1080],[420,1020]]}
+   hours:[[420,1020],[420,1080],[420,1080],[420,1080],[420,1080],[420,1080],[420,1020]]},
+  {n:'Capella – Kapelvej', cat:'legeplads', lat:55.68817, lng:12.552255, adr:'Kapelvej 32, København N',
+   note:'Fritidsklub for Blågårds Skole — udearealerne er åbne for alle, når klubben ikke bruger dem (efter luk og i weekenden). Lille boldbur med fodboldmål og basketkurve, bålhytte og naturlegeplads med forhindringsbane, rutsjebane, rebgynger, legetræhytter, lille trampolin og svævebane. Lige ved Assistens — god skygge fra træerne om sommeren.',
+   special:'capella', price:'free',
+   web:'https://kvisten-kk.aula.dk/capella/capellas-aabningstider'},
+  {n:'Felt/Megaron – Assistens', cat:'legeplads', lat:55.6911314, lng:12.547944, adr:'Kapelvej 4, Assistens Kirkegård, København N',
+   note:'Et hyggeligt lille legested/kunstværk inde på Assistens. Stenene rokker, hvilket børn synes er sjovt. Fint at lægge vejen forbi, hvis I alligevel er på tur i Assistens.',
+   type:'outdoor', price:'free'}
 ];
+
+/* Capella: fritidsklub bruger udearealerne man-fre til 18 (ons til 20).
+   Legepladsen er reelt for offentligheden efter luk + hele weekenden. */
+function capellaStatus(){
+  const d=new Date(), day=d.getDay(), n=nowMin();
+  // weekend: fri hele dagen
+  if(day===0||day===6) return {cls:'open', txt:'Åben (weekend)', open:true};
+  const clubCloses = (day===3) ? 20*60 : 18*60; // onsdag til 20, ellers 18
+  if(n>=clubCloses) return {cls:'open', txt:'Åben nu · efter klubluk', open:true};
+  return {cls:'closed', txt:'Klub bruger den · fri efter '+fmt(clubCloses), open:false};
+}
 
 /* ---------- Helpers ---------- */
 function nowMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
 function fmt(m){const h=Math.floor(m/60),mm=m%60;return h+(mm?'.'+String(mm).padStart(2,'0'):'');}
 function status(p){
+  if(p.special==='capella') return capellaStatus();
   if(p.type==='outdoor') return {cls:'outdoor', txt:'Udendørs', open:true};
   if(p.type==='info' || !p.hours) return {cls:'info', txt:'Se mere', open:true};
   const today=p.hours[new Date().getDay()];
@@ -1082,6 +1101,7 @@ function render(){
       <div class="meta">
         ${p.rating?`<span class="star">★ ${p.rating}</span><span>${p.rc} anmeldelser</span>`:''}
         ${p.hours?`<span class="hours">🕘 ${todayHours(p)} · <a class="hours-link" href="${hoursLink(p)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">aktuelle tider ↗</a></span>`:''}
+        ${(p.special==='capella')?`<span class="hours">🕘 <a class="hours-link" href="${p.web}" target="_blank" rel="noopener" onclick="event.stopPropagation()">klubbens åbningstider ↗</a></span>`:''}
       </div>
       <div class="actions">
         <a class="btn btn-route" href="${mapsLink(p)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↳ Rute i Google Maps</a>
@@ -1235,6 +1255,7 @@ function initMap(){
       <p>${p.note}</p>
       <div class="prow">${price}${p.rating?`★ ${p.rating} · ${p.rc} anm.`:''}</div>
       ${th?`<div class="prow">🕘 ${th} · <a href="${hoursLink(p)}" target="_blank" rel="noopener" style="color:#3E6E8E">aktuelle tider</a></div>`:''}
+      ${(p.special==='capella')?`<div class="prow">🕘 ${capellaStatus().txt} · <a href="${p.web}" target="_blank" rel="noopener" style="color:#3E6E8E">klubbens tider</a></div>`:''}
       <a href="${mapsLink(p)}" target="_blank" rel="noopener">Rutevejledning →</a>
     </div>`);
     p._marker=m;
