@@ -703,6 +703,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
     max-width:1320px;margin:0 auto;
     position:relative;
   }
+  .langtoggle{
+    position:absolute;top:26px;right:26px;display:flex;background:var(--paper-2);
+    border:1.5px solid var(--line);border-radius:40px;padding:3px;gap:2px;z-index:5;
+  }
+  .langtoggle button{
+    border:none;background:transparent;font-family:'Mulish',sans-serif;font-weight:700;
+    font-size:.78rem;letter-spacing:.05em;color:var(--ink-soft);padding:6px 12px;
+    border-radius:40px;cursor:pointer;transition:.15s;
+  }
+  .langtoggle button.active{background:var(--ink);color:#fff}
   .eyebrow{
     font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
     color:var(--terra);font-weight:700;margin-bottom:10px;
@@ -889,10 +899,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <body>
 
 <header>
-  <div class="eyebrow">Velkommen til kvarteret</div>
-  <h1>Børnevenlige steder omkring <em>Åboulevarden</em> & indre Nørrebro</h1>
-  <p class="intro">En lille, levende guide til legepladser, indendørs legesteder, biblioteker og caféer i nærområdet — samlet og kommenteret af en lokal forælder. <strong>Tryk på et sted</strong> for noter, åbningstider og rutevejledning. Det meste ligger inden for gå- eller cykelafstand.</p>
-  <p class="signature">God fornøjelse med at lære kvarteret at kende ✦</p>
+  <div class="langtoggle" id="langtoggle">
+    <button data-lang="da" class="active">DA</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <div class="eyebrow" id="t-eyebrow"></div>
+  <h1 id="t-h1"></h1>
+  <p class="intro" id="t-intro"></p>
+  <p class="signature" id="t-signature"></p>
 </header>
 
 <div class="weather" id="weather" hidden></div>
@@ -904,14 +918,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
   </div>
   <div class="chips" id="chips"></div>
   <button id="protips" class="chip protips-chip">🏆 Pro tips</button>
-  <button id="sortnear" class="chip" hidden>📍 Sortér nærmest</button>
-  <div class="opennow" id="opennow"><span class="switch"></span> Kun åbne nu</div>
+  <button id="sortnear" class="chip">📍 Sortér nærmest</button>
+  <div class="opennow" id="opennow"><span class="switch"></span> <span id="t-opennow"></span></div>
 </div>
 
 <div class="viewtoggle">
   <div>
-    <button id="tab-list" class="active">☰ Liste</button>
-    <button id="tab-map">⚲ Kort</button>
+    <button id="tab-list" class="active"></button>
+    <button id="tab-map"></button>
   </div>
 </div>
 
@@ -927,7 +941,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 <footer>
   <div class="legend" id="legend"></div>
-  Lavet som en delevenlig kvartersguide · Sidst opdateret <span id="lastupd"></span> · Kortdata © OpenStreetMap-bidragydere © CARTO · Åbningstider, priser og vurderinger er vejledende — tjek altid “aktuelle tider” inden et besøg.
+  <span id="t-footer"></span>
 </footer>
 
 <script>
@@ -939,98 +953,190 @@ svg.leaflet-image-layer.leaflet-interactive path {
 //# sourceMappingURL=leaflet.js.map
 </script>
 <script>
-/* ---------- Categories ---------- */
-const CATS = {
-  legeplads:{label:'Legeplads', color:'#4F8A5B', emoji:'🛝'},
-  indendoers:{label:'Indendørs leg', color:'#E0892F', emoji:'🧸'},
-  bibliotek:{label:'Bibliotek', color:'#3E6E8E', emoji:'📚'},
-  cafe:{label:'Café & grønt', color:'#B0674A', emoji:'🌿'},
-  sport:{label:'Sport & camps', color:'#7E5AA8', emoji:'⚽'}
+/* ===================== LANGUAGE ===================== */
+let LANG = 'da';
+
+const I18N = {
+  da:{
+    eyebrow:'Velkommen til kvarteret',
+    h1:'Børnevenlige steder omkring <em>Åboulevarden</em> & indre Nørrebro',
+    intro:'En lille, levende guide til legepladser, indendørs legesteder, biblioteker og caféer i nærområdet — samlet og kommenteret af en lokal forælder. <strong>Tryk på et sted</strong> for noter, åbningstider og rutevejledning. Det meste ligger inden for gå- eller cykelafstand.',
+    signature:'God fornøjelse med at lære kvarteret at kende ✦',
+    searchPh:'Søg efter sted eller gade…',
+    protips:'🏆 Pro tips',
+    sortnear:'📍 Sortér nærmest',
+    opennow:'Kun åbne nu',
+    tabList:'☰ Liste',
+    tabMap:'⚲ Kort',
+    locate:'⊙ Vis min position & afstande',
+    placeOne:'sted', placeMany:'steder', shown:'vist', nearestFirst:'nærmest først',
+    empty:'Ingen steder matcher — prøv at fjerne et filter.',
+    proNote:'🏆 <b>Pro tips</b> — vores egne favoritter i kvarteret: små, gode steder, som man nok ikke selv falder over.',
+    bOutdoor:'Udendørs', bClosedToday:'Lukket i dag', bClosedNow:'Lukket nu', bSeeMore:'Se mere',
+    bOpenUntil:t=>'Åben nu · til '+t,
+    cWeekend:'Åben (weekend)', cAfterClub:'Åben nu · efter klubluk', cClubUses:t=>'Klub bruger den · fri efter '+t,
+    free:'Gratis', paid:'Betaling', pusle:'🚼 Pusleplads',
+    walk:'min gang', today:(a,b)=>'I dag '+a+'–'+b, closedToday:'Lukket i dag',
+    hoursLink:'aktuelle tider ↗', clubHoursLink:'klubbens åbningstider ↗', clubHoursShort:'klubbens tider',
+    currentHoursShort:'aktuelle tider',
+    btnRoute:'↳ Rute i Google Maps', btnWeb:'Hjemmeside',
+    reviews:'anmeldelser', reviewsShort:'anm.',
+    wxWet:t=>`<b>Det er vådt ude lige nu</b> (${t}°). Måske en indendørs dag?`,
+    wxDry:t=>`<b>Tørt ude lige nu</b> (${t}°) — fin dag til legepladsen.`,
+    wxIndoor:'Vis kun indendørs', wxShowAll:'Vis alle igen',
+    youHere:'Du er her',
+    mapFail:'<strong>Kortet kunne ikke indlæses her.</strong>Det sker typisk i en forhåndsvisning, der blokerer eksterne kort. Åbn siden i en browser, så virker kortet — listen, afstande og alle ruteknapper virker uanset hvad.',
+    footer:date=>`Lavet som en delevenlig kvartersguide · Sidst opdateret ${date} · Kortdata © OpenStreetMap-bidragydere © CARTO · Åbningstider, priser og vurderinger er vejledende — tjek altid “aktuelle tider” inden et besøg.`,
+    lastUpdated:'30. maj 2026',
+    cats:{legeplads:'Legeplads', indendoers:'Indendørs leg', bibliotek:'Bibliotek', cafe:'Café & grønt', sport:'Sport & camps'}
+  },
+  en:{
+    eyebrow:'Welcome to the neighbourhood',
+    h1:'Family-friendly spots around <em>Åboulevarden</em> & inner Nørrebro',
+    intro:'A little, living guide to playgrounds, indoor play spots, libraries and cafés in the area — gathered and annotated by a local parent. <strong>Tap a place</strong> for notes, opening hours and directions. Most of it is within walking or cycling distance.',
+    signature:'Enjoy getting to know the neighbourhood ✦',
+    searchPh:'Search for a place or street…',
+    protips:'🏆 Pro tips',
+    sortnear:'📍 Sort by nearest',
+    opennow:'Open now only',
+    tabList:'☰ List',
+    tabMap:'⚲ Map',
+    locate:'⊙ Show my location & distances',
+    placeOne:'place', placeMany:'places', shown:'shown', nearestFirst:'nearest first',
+    empty:'No places match — try removing a filter.',
+    proNote:"🏆 <b>Pro tips</b> — our own favourites in the neighbourhood: small, great spots you probably wouldn't find on your own.",
+    bOutdoor:'Outdoors', bClosedToday:'Closed today', bClosedNow:'Closed now', bSeeMore:'See more',
+    bOpenUntil:t=>'Open now · until '+t,
+    cWeekend:'Open (weekend)', cAfterClub:'Open now · after club closes', cClubUses:t=>'Club is using it · free after '+t,
+    free:'Free', paid:'Paid', pusle:'🚼 Changing table',
+    walk:'min walk', today:(a,b)=>'Today '+a+'–'+b, closedToday:'Closed today',
+    hoursLink:'current hours ↗', clubHoursLink:'club opening hours ↗', clubHoursShort:'club hours',
+    currentHoursShort:'current hours',
+    btnRoute:'↳ Directions in Google Maps', btnWeb:'Website',
+    reviews:'reviews', reviewsShort:'rev.',
+    wxWet:t=>`<b>It's wet outside right now</b> (${t}°). Maybe an indoor day?`,
+    wxDry:t=>`<b>Dry outside right now</b> (${t}°) — a fine day for the playground.`,
+    wxIndoor:'Show indoor only', wxShowAll:'Show all again',
+    youHere:'You are here',
+    mapFail:"<strong>The map couldn't load here.</strong>This usually happens in a preview that blocks external maps. Open the page in a browser and the map will work — the list, distances and all directions buttons work regardless.",
+    footer:date=>`Made as a shareable neighbourhood guide · Last updated ${date} · Map data © OpenStreetMap contributors © CARTO · Opening hours, prices and ratings are indicative — always check “current hours” before a visit.`,
+    lastUpdated:'30 May 2026',
+    cats:{legeplads:'Playground', indendoers:'Indoor play', bibliotek:'Library', cafe:'Café & green', sport:'Sport & camps'}
+  }
 };
+const T = ()=>I18N[LANG];
 
-const LAST_UPDATED = '30. maj 2026';
+/* ---------- Categories (colors/emoji shared; label via i18n) ---------- */
+const CATS = {
+  legeplads:{color:'#4F8A5B', emoji:'🛝'},
+  indendoers:{color:'#E0892F', emoji:'🧸'},
+  bibliotek:{color:'#3E6E8E', emoji:'📚'},
+  cafe:{color:'#B0674A', emoji:'🌿'},
+  sport:{color:'#7E5AA8', emoji:'⚽'}
+};
+const catLabel = key => T().cats[key];
 
-/* hours[] indexed by JS getDay(): 0=Søn,1=Man … 6=Lør. [openMin,closeMin] or null=lukket.
-   price: 'free' | 'paid' (udeladt = ukendt). indoor: true for inde-steder. pusle: true kun hvor kendt. */
+/* hours[] indexed by JS getDay(): 0=Søn,1=Man … 6=Lør. [openMin,closeMin] or null=lukket. */
 const PLACES = [
-  {n:'Legeplads – Steenwinkelsvej', cat:'legeplads', pro:true, lat:55.6837593, lng:12.5486113, adr:'Steenwinkelsvej 20, Frederiksberg',
-   note:'Lille, hyggelig legeplads. Fin til et hurtigt stop.', type:'outdoor', price:'free'},
-  {n:'Little House', cat:'indendoers', lat:55.6833376, lng:12.5474176, adr:'Rosenørns Allé 60, Frederiksberg',
+  {n:'Legeplads – Steenwinkelsvej', n_en:'Playground – Steenwinkelsvej', cat:'legeplads', pro:true, lat:55.6837593, lng:12.5486113, adr:'Steenwinkelsvej 20, Frederiksberg',
+   note:'Lille, hyggelig legeplads. Fin til et hurtigt stop.',
+   note_en:'Small, cosy playground. Nice for a quick stop.', type:'outdoor', price:'free'},
+  {n:'Little House', n_en:'Little House', cat:'indendoers', lat:55.6833376, lng:12.5474176, adr:'Rosenørns Allé 60, Frederiksberg',
    note:'Indendørs legecafé — endnu ikke prøvet. Bedst for de mindste (ca. 0–3 år). Sko-frit gulv, så babyer kan kravle. Bemærk: lukket lørdag.',
+   note_en:'Indoor play café — not tried yet. Best for the youngest (approx. 0–3 yrs). Shoe-free floor, so babies can crawl. Note: closed Saturdays.',
    rating:4.0, rc:25, web:'https://www.little-house.dk/', indoor:true, pusle:true, price:'paid',
    hours:[[540,720],[540,1080],[540,1080],[540,1080],[540,1080],[540,1080],null]},
-  {n:'Kids Kollektive', cat:'indendoers', lat:55.6815234, lng:12.549556, adr:'H.C. Ørsteds Vej 48A, Frederiksberg',
+  {n:'Kids Kollektive', n_en:'Kids Kollektive', cat:'indendoers', lat:55.6815234, lng:12.549556, adr:'H.C. Ørsteds Vej 48A, Frederiksberg',
    note:'Endnu ikke prøvet. Hold og kurser for forældre og baby (rytmik, motorik, massage m.m.).',
+   note_en:'Not tried yet. Classes and courses for parents and baby (rhythm, motor skills, massage etc.).',
    rating:4.8, rc:94, web:'http://www.kidskollektive.dk/', type:'info', indoor:true, price:'paid'},
-  {n:'Legeplads – Hans Tavsens Gade', cat:'legeplads', lat:55.6884059, lng:12.5494424, adr:'Hans Tavsens Gade 10, København N',
+  {n:'Legeplads – Hans Tavsens Gade', n_en:'Playground – Hans Tavsens Gade', cat:'legeplads', lat:55.6884059, lng:12.5494424, adr:'Hans Tavsens Gade 10, København N',
    note:'“Vores egen” legeplads — men under ombygning pt. Bemandet på hverdage og med indendørsområde. Stor og varieret.',
+   note_en:'“Our own” playground — but under renovation right now. Staffed on weekdays and with an indoor area. Big and varied.',
    rating:4.5, rc:99, type:'outdoor', price:'free'},
-  {n:'Minigolf – Hans Tavsens Park', cat:'sport', lat:55.6900579, lng:12.5460078, adr:'Hans Tavsens Gade 40, København N',
+  {n:'Minigolf – Hans Tavsens Park', n_en:'Minigolf – Hans Tavsens Park', cat:'sport', lat:55.6900579, lng:12.5460078, adr:'Hans Tavsens Gade 40, København N',
    note:'Minigolf + trampoliner op mod Nørrebro Park Skole. Kan være lidt slidt eller lukket — tjek før I tager afsted.',
+   note_en:'Minigolf + trampolines up towards Nørrebro Park School. Can be a bit worn or closed — check before you head over.',
    rating:2.7, rc:3, price:'free', hours:[null,[600,1080],[600,1080],[600,1080],[600,1080],[600,1080],null]},
-  {n:'Linden – Kapelvej', cat:'legeplads', pro:true, lat:55.6877746, lng:12.552335, adr:'Kapelvej 36, København N',
-   note:'Institution — legepladsen er åben i weekenderne, når institutionen er lukket.', type:'outdoor', price:'free'},
-  {n:'Flyverlegepladsen – Stefansgade', cat:'legeplads', lat:55.6942562, lng:12.5422289, adr:'Stefansgade 28-30, København N',
+  {n:'Linden – Kapelvej', n_en:'Linden – Kapelvej', cat:'legeplads', pro:true, lat:55.6877746, lng:12.552335, adr:'Kapelvej 36, København N',
+   note:'Institution — legepladsen er åben i weekenderne, når institutionen er lukket.',
+   note_en:'Daycare institution — the playground is open at weekends, when the institution is closed.', type:'outdoor', price:'free'},
+  {n:'Flyverlegepladsen – Stefansgade', n_en:'Flyverlegepladsen playground – Stefansgade', cat:'legeplads', lat:55.6942562, lng:12.5422289, adr:'Stefansgade 28-30, København N',
    note:'Stor legeplads i Nørrebroparken. Bemandet på hverdage, indendørsområde og smådyr. En af de bedste i byen.',
+   note_en:'Large playground in Nørrebroparken. Staffed on weekdays, indoor area and small animals. One of the best in the city.',
    rating:4.3, rc:1203, type:'outdoor', price:'free'},
-  {n:'Bemandet legeplads – Wesselsgade', cat:'legeplads', lat:55.6859569, lng:12.5596405, adr:'Wesselsgade 12, København N',
+  {n:'Bemandet legeplads – Wesselsgade', n_en:'Staffed playground – Wesselsgade', cat:'legeplads', lat:55.6859569, lng:12.5596405, adr:'Wesselsgade 12, København N',
    note:'Bemandet legeplads med trampoliner, hængekøjer og zipline. Toiletter og masser af skygge og bænke.',
+   note_en:'Staffed playground with trampolines, hammocks and a zipline. Toilets and plenty of shade and benches.',
    rating:4.3, rc:147, type:'outdoor', price:'free'},
-  {n:'Lege- & boldområde bag Bülowsvejshallen', cat:'sport', pro:true, lat:55.6823329, lng:12.5451883, adr:'Bülowsvej 34, Frederiksberg',
+  {n:'Lege- & boldområde bag Bülowsvejshallen', n_en:'Play & ball area behind Bülowsvejshallen', cat:'sport', pro:true, lat:55.6823329, lng:12.5451883, adr:'Bülowsvej 34, Frederiksberg',
    note:'Masser af plads bagved — perfekt til at øve løbecykel og lignende. Ikke så mange legeting til de helt små.',
+   note_en:'Lots of space at the back — perfect for practising balance bikes and the like. Not many play things for the very youngest.',
    rating:4.1, rc:128, type:'outdoor', price:'free'},
-  {n:'Bemandet legeplads – Ørstedsparken', cat:'legeplads', lat:55.6806166, lng:12.564786, adr:'Nørre Farimagsgade 2, København K',
+  {n:'Bemandet legeplads – Ørstedsparken', n_en:'Staffed playground – Ørstedsparken', cat:'legeplads', lat:55.6806166, lng:12.564786, adr:'Nørre Farimagsgade 2, København K',
    note:'Tag 68’eren et par stop. Bemandet, masser af aktiviteter for alle aldre og et indendørs legehus.',
+   note_en:'Take bus 68 a couple of stops. Staffed, lots of activities for all ages and an indoor playhouse.',
    rating:4.6, rc:221, type:'outdoor', price:'free'},
-  {n:'Legeplads ved Forum', cat:'legeplads', lat:55.6804782, lng:12.5530671, adr:'Julius Thomsens Plads 2, Frederiksberg',
-   note:'Legeplads ved Forum. God plads til klapvogne.', rating:4.3, rc:24, type:'outdoor', price:'free'},
-  {n:'Legeplads – Danas Plads', cat:'legeplads', lat:55.6787428, lng:12.553232, adr:'Danas Plads, Frederiksberg',
-   note:'Den er nice. Hyggeligt, lille område — fin til de mindste.', rating:4.8, rc:5, type:'outdoor', price:'free'},
-  {n:'Frederiksberg Hovedbibliotek', cat:'bibliotek', pro:true, lat:55.6807404, lng:12.5303481, adr:'Falkoner Plads 3, Frederiksberg',
-   note:'Underetagen (-2) er en hel børneetage. Åbent længe og rart at falde til ro i.',
+  {n:'Legeplads ved Forum', n_en:'Playground by Forum', cat:'legeplads', lat:55.6804782, lng:12.5530671, adr:'Julius Thomsens Plads 2, Frederiksberg',
+   note:'Legeplads ved Forum. God plads til klapvogne.',
+   note_en:'Playground by Forum. Good space for prams.', rating:4.3, rc:24, type:'outdoor', price:'free'},
+  {n:'Legeplads – Danas Plads', n_en:'Playground – Danas Plads', cat:'legeplads', lat:55.6787428, lng:12.553232, adr:'Danas Plads, Frederiksberg',
+   note:'Den er nice. Hyggeligt, lille område — fin til de mindste.',
+   note_en:"It's nice. Cosy, small area — good for the youngest.", rating:4.8, rc:5, type:'outdoor', price:'free'},
+  {n:'Frederiksberg Hovedbibliotek', n_en:'Frederiksberg Main Library', cat:'bibliotek', pro:true, lat:55.6807404, lng:12.5303481, adr:'Falkoner Plads 3, Frederiksberg',
+   note:'Underetagen (-2) er en hel børneetage. Masser af plads og et godt sted på en regnvejrsdag.',
+   note_en:"The lower floor (-2) is a whole children's level. Lots of space and a great spot on a rainy day.",
    rating:4.4, rc:173, web:'http://www.biblioteketfrederiksberg.dk/', indoor:true, price:'free',
    hours:[[420,1320],[420,1320],[420,1320],[420,1320],[420,1320],[420,1320],[420,1320]]},
-  {n:'Frederiksberg Centret', cat:'indendoers', lat:55.6816373, lng:12.5326635, adr:'Falkoner Allé 21, Frederiksberg',
+  {n:'Frederiksberg Centret', n_en:'Frederiksberg Centret', cat:'indendoers', lat:55.6816373, lng:12.5326635, adr:'Falkoner Allé 21, Frederiksberg',
    note:'Lille legeplads inde i centeret. God puslefacilitet ved babyloungen — fin i regnvejr.',
+   note_en:'Small playground inside the mall. Good changing facilities by the baby lounge — nice in the rain.',
    rating:4.2, rc:9117, web:'https://frbc-shopping.dk/', indoor:true, pusle:true, price:'free',
    hours:[[600,1080],[600,1140],[600,1140],[600,1140],[600,1140],[600,1140],[600,1080]]},
-  {n:'KU.BE', cat:'indendoers', lat:55.6830558, lng:12.5055737, adr:'Dirch Passers Allé 8A, Frederiksberg',
+  {n:'KU.BE', n_en:'KU.BE', cat:'indendoers', lat:55.6830558, lng:12.5055737, adr:'Dirch Passers Allé 8A, Frederiksberg',
    note:'Gratis kulturhus med klatre- og bevægelsesaktiviteter, café og lille bibliotek. Nok bedst for lidt større børn. Kan have kø i ferier.',
+   note_en:'Free culture house with climbing and movement activities, a café and a small library. Probably best for slightly older children. Can be busy during holidays.',
    rating:4.4, rc:1688, web:'http://kube.frederiksberg.dk/', indoor:true, price:'free',
    hours:[[540,900],[600,1200],[600,1200],[600,1200],[600,1200],[600,1200],[540,1200]]},
-  {n:'Landbohøjskolens Have', cat:'cafe', lat:55.6807852, lng:12.5421746, adr:'Bülowsvej 17, Frederiksberg',
+  {n:'Landbohøjskolens Have', n_en:'Landbohøjskolen Garden', cat:'cafe', lat:55.6807852, lng:12.5421746, adr:'Bülowsvej 17, Frederiksberg',
    note:'Smuk lille have med café. Alle planter og træer har navneskilte — fin til en rolig tur med barnevogn.',
+   note_en:'Beautiful little garden with a café. All plants and trees have name tags — lovely for a calm walk with the pram.',
    rating:4.7, rc:1667, web:'http://plen.ku.dk/pfv/haven/', price:'free',
    hours:[[420,1200],[420,1200],[420,1200],[420,1200],[420,1200],[420,1200],[420,1200]]},
-  {n:'Blågården Bibliotek', cat:'bibliotek', lat:55.6860977, lng:12.5567314, adr:'Blågårds Plads 5, København N',
+  {n:'Blågården Bibliotek', n_en:'Blågården Library', cat:'bibliotek', lat:55.6860977, lng:12.5567314, adr:'Blågårds Plads 5, København N',
    note:'Bibliotek på Blågårds Plads med børneafdeling, børnebøger og brætspil.',
+   note_en:"Library at Blågårds Plads with a children's section, children's books and board games.",
    rating:4.3, rc:28, web:'https://bibliotek.kk.dk/bibliotek/blaagaardens', indoor:true, price:'free',
    hours:[[540,960],[480,1200],[480,1200],[480,1200],[480,1200],[480,960],[480,960]]},
-  {n:'Korsgadehallen', cat:'sport', lat:55.6859189, lng:12.5557489, adr:'Korsgade 29, København N',
+  {n:'Korsgadehallen', n_en:'Korsgadehallen', cat:'sport', lat:55.6859189, lng:12.5557489, adr:'Korsgade 29, København N',
    note:'Holder ofte lege-sommercamps i ferierne — værd at holde øje med. (Ellers mest holdsport.)',
+   note_en:'Often runs play summer camps during the holidays — worth keeping an eye on. (Otherwise mostly team sports.)',
    rating:4.1, rc:112, web:'http://kulturogfritidn.kk.dk/korsgadehallen', type:'info', price:'paid'},
-  {n:'Emmerys – Rantzausgade', cat:'cafe', lat:55.6869172, lng:12.5491733, adr:'Rantzausgade 36, København N',
+  {n:'Emmerys – Rantzausgade', n_en:'Emmerys – Rantzausgade', cat:'cafe', lat:55.6869172, lng:12.5491733, adr:'Rantzausgade 36, København N',
    note:'Har lidt legesager til børnene. (Lagkagehuset rundtomkring i kvarteret har det som regel også.)',
+   note_en:'Has a few toys for the children. (Lagkagehuset around the neighbourhood usually does too.)',
    rating:3.6, rc:25, web:'https://emmerys.dk/', indoor:true,
    hours:[[420,1020],[420,1080],[420,1080],[420,1080],[420,1080],[420,1080],[420,1020]]},
-  {n:'Capella – Kapelvej', cat:'legeplads', pro:true, lat:55.68817, lng:12.552255, adr:'Kapelvej 32, København N',
+  {n:'Capella – Kapelvej', n_en:'Capella – Kapelvej', cat:'legeplads', pro:true, lat:55.68817, lng:12.552255, adr:'Kapelvej 32, København N',
    note:'Fritidsklub for Blågårds Skole — udearealerne er åbne for alle, når klubben ikke bruger dem (efter luk og i weekenden). Lille boldbur med fodboldmål og basketkurve, bålhytte og naturlegeplads med forhindringsbane, rutsjebane, rebgynger, legetræhytter, lille trampolin og svævebane. Lige ved Assistens — god skygge fra træerne om sommeren.',
+   note_en:"After-school club for Blågårds Skole — the outdoor areas are open to everyone when the club isn't using them (after closing and at weekends). Small ball cage with football goals and basketball hoops, a campfire hut and a nature playground with an obstacle course, slide, rope swings, play tree huts, a small trampoline and a zipline. Right by Assistens — good shade from the trees in summer.",
    special:'capella', price:'free',
    web:'https://kvisten-kk.aula.dk/capella/capellas-aabningstider'},
-  {n:'Felt/Megaron – Assistens', cat:'legeplads', pro:true, lat:55.6911314, lng:12.547944, adr:'Kapelvej 4, Assistens Kirkegård, København N',
+  {n:'Felt/Megaron – Assistens', n_en:'Felt/Megaron – Assistens', cat:'legeplads', pro:true, lat:55.6911314, lng:12.547944, adr:'Kapelvej 4, Assistens Kirkegård, København N',
    note:'Et hyggeligt lille legested/kunstværk inde på Assistens. Stenene rokker, hvilket børn synes er sjovt. Fint at lægge vejen forbi, hvis I alligevel er på tur i Assistens.',
+   note_en:"A cosy little play spot/artwork inside Assistens. The stones rock, which children find fun. Nice to swing by if you're already out for a walk in Assistens.",
    type:'outdoor', price:'free'}
 ];
+const pName = p => (LANG==='en' && p.n_en) ? p.n_en : p.n;
+const pNote = p => (LANG==='en' && p.note_en) ? p.note_en : p.note;
 
-/* Capella: fritidsklub bruger udearealerne man-fre til 18 (ons til 20).
-   Legepladsen er reelt for offentligheden efter luk + hele weekenden. */
+/* ---------- Capella public-access status ---------- */
 function capellaStatus(){
   const d=new Date(), day=d.getDay(), n=nowMin();
-  // weekend: fri hele dagen
-  if(day===0||day===6) return {cls:'open', txt:'Åben (weekend)', open:true};
-  const clubCloses = (day===3) ? 20*60 : 18*60; // onsdag til 20, ellers 18
-  if(n>=clubCloses) return {cls:'open', txt:'Åben nu · efter klubluk', open:true};
-  return {cls:'closed', txt:'Klub bruger den · fri efter '+fmt(clubCloses), open:false};
+  if(day===0||day===6) return {cls:'open', txt:T().cWeekend, open:true};
+  const clubCloses = (day===3) ? 20*60 : 18*60;
+  if(n>=clubCloses) return {cls:'open', txt:T().cAfterClub, open:true};
+  return {cls:'closed', txt:T().cClubUses(fmt(clubCloses)), open:false};
 }
 
 /* ---------- Helpers ---------- */
@@ -1038,18 +1144,18 @@ function nowMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
 function fmt(m){const h=Math.floor(m/60),mm=m%60;return h+(mm?'.'+String(mm).padStart(2,'0'):'');}
 function status(p){
   if(p.special==='capella') return capellaStatus();
-  if(p.type==='outdoor') return {cls:'outdoor', txt:'Udendørs', open:true};
-  if(p.type==='info' || !p.hours) return {cls:'info', txt:'Se mere', open:true};
+  if(p.type==='outdoor') return {cls:'outdoor', txt:T().bOutdoor, open:true};
+  if(p.type==='info' || !p.hours) return {cls:'info', txt:T().bSeeMore, open:true};
   const today=p.hours[new Date().getDay()];
-  if(!today) return {cls:'closed', txt:'Lukket i dag', open:false};
+  if(!today) return {cls:'closed', txt:T().bClosedToday, open:false};
   const n=nowMin();
-  if(n>=today[0]&&n<today[1]) return {cls:'open', txt:'Åben nu · til '+fmt(today[1]), open:true};
-  return {cls:'closed', txt:'Lukket nu', open:false};
+  if(n>=today[0]&&n<today[1]) return {cls:'open', txt:T().bOpenUntil(fmt(today[1])), open:true};
+  return {cls:'closed', txt:T().bClosedNow, open:false};
 }
 function todayHours(p){
   if(!p.hours) return '';
   const t=p.hours[new Date().getDay()];
-  return t ? 'I dag '+fmt(t[0])+'–'+fmt(t[1]) : 'Lukket i dag';
+  return t ? T().today(fmt(t[0]),fmt(t[1])) : T().closedToday;
 }
 function mapsLink(p){return 'https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng;}
 function hoursLink(p){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.n+', '+p.adr);}
@@ -1060,7 +1166,7 @@ function haversine(la1,lo1,la2,lo2){
   return 2*R*Math.asin(Math.sqrt(a));
 }
 function fmtDist(m){return m<1000 ? Math.round(m/10)*10+' m' : (m/1000).toFixed(1).replace('.',',')+' km';}
-function walkMin(m){return Math.max(1,Math.round(m/80));} // ~80 m/min = roligt gåtempo
+function walkMin(m){return Math.max(1,Math.round(m/80));}
 
 /* ---------- State ---------- */
 let activeCats=new Set(Object.keys(CATS));
@@ -1078,7 +1184,7 @@ function render(){
       && (!onlyOpen || st.open)
       && (!indoorOnly || p.indoor)
       && (!proOnly || p.pro)
-      && (query==='' || (p.n+' '+p.adr+' '+p.note).toLowerCase().includes(query));
+      && (query==='' || (pName(p)+' '+p.adr+' '+pNote(p)).toLowerCase().includes(query));
     p._match=match;
     if(p._marker){
       p._marker.setOpacity(match?1:0);
@@ -1089,11 +1195,9 @@ function render(){
   if(sortNear && userPos) order.sort((a,b)=>(a._dist??1e12)-(b._dist??1e12));
   else if(proOnly) order.sort((a,b)=>(b.pro?1:0)-(a.pro?1:0));
   let shown=0;
-  // pro-tips note at top when filter active
   if(proOnly){
     const n=document.createElement('div');
-    n.className='pro-note';
-    n.innerHTML='🏆 <b>Pro tips</b> — vores egne favoritter i kvarteret: små, gode steder, som man nok ikke selv falder over.';
+    n.className='pro-note'; n.innerHTML=T().proNote;
     listEl.appendChild(n);
   }
   order.forEach(p=>{
@@ -1102,28 +1206,28 @@ function render(){
     const c=CATS[p.cat];
     const st=status(p);
     const amen=[];
-    if(p.price==='free') amen.push('<span class="pricetag free">Gratis</span>');
-    if(p.price==='paid') amen.push('<span class="pricetag paid">Betaling</span>');
-    if(p.pusle) amen.push('<span class="amenity">🚼 Pusleplads</span>');
-    if(p._dist!=null) amen.push('<span class="amenity dist">📍 '+fmtDist(p._dist)+' · '+walkMin(p._dist)+' min gang</span>');
+    if(p.price==='free') amen.push('<span class="pricetag free">'+T().free+'</span>');
+    if(p.price==='paid') amen.push('<span class="pricetag paid">'+T().paid+'</span>');
+    if(p.pusle) amen.push('<span class="amenity">'+T().pusle+'</span>');
+    if(p._dist!=null) amen.push('<span class="amenity dist">📍 '+fmtDist(p._dist)+' · '+walkMin(p._dist)+' '+T().walk+'</span>');
     const card=document.createElement('div');
     card.className='card'; card.style.setProperty('--c',c.color);
     card.innerHTML=`
-      <h3 class="card-title">${p.pro?'<span class="pro-star" title="Pro tip">🏆</span> ':''}${p.n}</h3>
+      <h3 class="card-title">${p.pro?'<span class="pro-star" title="Pro tip">🏆</span> ':''}${pName(p)}</h3>
       <div class="card-sub">
-        <span class="tag" style="--c:${c.color}">${c.emoji} ${c.label}</span>
+        <span class="tag" style="--c:${c.color}">${c.emoji} ${catLabel(p.cat)}</span>
         <span class="badge ${st.cls}">${st.txt}</span>
       </div>
-      <div class="note">${p.note}</div>
+      <div class="note">${pNote(p)}</div>
       ${amen.length?`<div class="amenities">${amen.join('')}</div>`:''}
       <div class="meta">
-        ${p.rating?`<span class="star">★ ${p.rating}</span><span>${p.rc} anmeldelser</span>`:''}
-        ${p.hours?`<span class="hours">🕘 ${todayHours(p)} · <a class="hours-link" href="${hoursLink(p)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">aktuelle tider ↗</a></span>`:''}
-        ${(p.special==='capella')?`<span class="hours">🕘 <a class="hours-link" href="${p.web}" target="_blank" rel="noopener" onclick="event.stopPropagation()">klubbens åbningstider ↗</a></span>`:''}
+        ${p.rating?`<span class="star">★ ${p.rating}</span><span>${p.rc} ${T().reviews}</span>`:''}
+        ${p.hours?`<span class="hours">🕘 ${todayHours(p)} · <a class="hours-link" href="${hoursLink(p)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${T().hoursLink}</a></span>`:''}
+        ${(p.special==='capella')?`<span class="hours">🕘 <a class="hours-link" href="${p.web}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${T().clubHoursLink}</a></span>`:''}
       </div>
       <div class="actions">
-        <a class="btn btn-route" href="${mapsLink(p)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↳ Rute i Google Maps</a>
-        ${p.web?`<a class="btn btn-web" href="${p.web}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Hjemmeside</a>`:''}
+        <a class="btn btn-route" href="${mapsLink(p)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${T().btnRoute}</a>
+        ${p.web?`<a class="btn btn-web" href="${p.web}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${T().btnWeb}</a>`:''}
       </div>`;
     card.addEventListener('click',()=>{
       if(activeCard) activeCard.classList.remove('active');
@@ -1136,41 +1240,50 @@ function render(){
     });
     listEl.appendChild(card);
   });
-  countEl.textContent = shown+' '+(shown===1?'sted':'steder')+' vist'+(sortNear&&userPos?' · nærmest først':'');
+  const word = shown===1?T().placeOne:T().placeMany;
+  countEl.textContent = shown+' '+word+' '+T().shown+(sortNear&&userPos?' · '+T().nearestFirst:'');
   if(shown===0){
-    const e=document.createElement('div');
-    e.className='empty'; e.textContent='Ingen steder matcher — prøv at fjerne et filter.';
+    const e=document.createElement('div'); e.className='empty'; e.textContent=T().empty;
     listEl.appendChild(e);
   }
 }
 
 /* ---------- Chips ---------- */
 const chipsEl=document.getElementById('chips');
-Object.entries(CATS).forEach(([key,c])=>{
-  const b=document.createElement('button');
-  b.className='chip active'; b.style.setProperty('--c',c.color);
-  b.innerHTML=`<span class="dot"></span>${c.label}`;
-  b.addEventListener('click',()=>{
-    if(activeCats.has(key)){activeCats.delete(key);b.classList.remove('active');}
-    else{activeCats.add(key);b.classList.add('active');}
-    render();
+function buildChips(){
+  chipsEl.innerHTML='';
+  Object.entries(CATS).forEach(([key,c])=>{
+    const b=document.createElement('button');
+    b.className='chip'+(activeCats.has(key)?' active':''); b.style.setProperty('--c',c.color);
+    b.innerHTML=`<span class="dot"></span>${catLabel(key)}`;
+    b.addEventListener('click',()=>{
+      if(activeCats.has(key)){activeCats.delete(key);b.classList.remove('active');}
+      else{activeCats.add(key);b.classList.add('active');}
+      render();
+    });
+    chipsEl.appendChild(b);
   });
-  chipsEl.appendChild(b);
-});
+}
 
 /* ---------- Legend ---------- */
 const legendEl=document.getElementById('legend');
-Object.values(CATS).forEach(c=>{
-  const s=document.createElement('span');
-  s.innerHTML=`<span class="dot" style="background:${c.color}"></span>${c.emoji} ${c.label}`;
-  legendEl.appendChild(s);
-});
+function buildLegend(){
+  legendEl.innerHTML='';
+  Object.entries(CATS).forEach(([key,c])=>{
+    const s=document.createElement('span');
+    s.innerHTML=`<span class="dot" style="background:${c.color}"></span>${c.emoji} ${catLabel(key)}`;
+    legendEl.appendChild(s);
+  });
+}
 
 /* ---------- Controls ---------- */
 document.getElementById('search').addEventListener('input',e=>{query=e.target.value.toLowerCase().trim();render();});
 const onEl=document.getElementById('opennow');
 onEl.addEventListener('click',()=>{onlyOpen=!onlyOpen;onEl.classList.toggle('on',onlyOpen);render();});
-sortBtn.addEventListener('click',()=>{sortNear=!sortNear;sortBtn.classList.toggle('active',sortNear);render();});
+sortBtn.addEventListener('click',()=>{
+  if(!userPos){ requestLocation(); return; }   // intet at sortere efter endnu → hent position
+  sortNear=!sortNear; sortBtn.classList.toggle('active',sortNear); render();
+});
 const proBtn=document.getElementById('protips');
 proBtn.addEventListener('click',()=>{proOnly=!proOnly;proBtn.classList.toggle('active',proOnly);render();});
 
@@ -1182,29 +1295,67 @@ function showMap(){if(!mapOK)return;listEl.hidden=true;mapWrap.hidden=false;tabM
 tabList.addEventListener('click',showList);
 tabMap.addEventListener('click',showMap);
 
-/* ---------- Geolocation: distance + walk time (works with or without map) ---------- */
+/* ---------- Geolocation ---------- */
 function applyDistances(la,lo){
   PLACES.forEach(p=>{p._dist=haversine(la,lo,p.lat,p.lng);});
   userPos=[la,lo];
   sortNear=true; sortBtn.hidden=false; sortBtn.classList.add('active');
   render();
 }
-document.getElementById('locate').addEventListener('click',()=>{
-  if(!navigator.geolocation){alert('Din browser understøtter ikke lokation.');return;}
+function geoError(err){
+  const en = LANG==='en';
+  let msg;
+  if(err && err.code===1){ // PERMISSION_DENIED
+    msg = en ? 'Location access was blocked. Allow it in your browser address bar, then try again.'
+             : 'Adgang til din position blev blokeret. Tillad den i browserens adresselinje og prøv igen.';
+  } else if(err && err.code===2){ // POSITION_UNAVAILABLE
+    msg = en ? 'Your location is unavailable right now. Try again in a moment.'
+             : 'Din position er ikke tilgængelig lige nu. Prøv igen om lidt.';
+  } else if(err && err.code===3){ // TIMEOUT
+    msg = en ? 'Getting your location timed out. Try again.'
+             : 'Det tog for lang tid at hente din position. Prøv igen.';
+  } else {
+    msg = en ? 'Could not get your location.' : 'Kunne ikke hente din position.';
+  }
+  alert(msg);
+}
+let locating=false;
+function requestLocation(){
+  if(locating) return;
+  const locBtn=document.getElementById('locate');
+  if(!navigator.geolocation){
+    alert(LANG==='en'?'Your browser does not support location.':'Din browser understøtter ikke lokation.');
+    return;
+  }
+  if(!window.isSecureContext){
+    alert(LANG==='en'
+      ? 'Location needs a secure (https) connection. Open the site over https.'
+      : 'Lokation kræver en sikker (https) forbindelse. Åbn siden via https.');
+    return;
+  }
+  locating=true;
+  const orig=locBtn.textContent;
+  locBtn.textContent = LANG==='en' ? '⊙ Locating…' : '⊙ Henter position…';
   navigator.geolocation.getCurrentPosition(pos=>{
+    locating=false; locBtn.textContent=orig;
     const {latitude:la,longitude:lo}=pos.coords;
     applyDistances(la,lo);
     if(mapOK){
       if(window._me) map.removeLayer(window._me);
       window._me=L.circleMarker([la,lo],{radius:9,color:'#fff',weight:3,fillColor:'#C8633F',fillOpacity:1}).addTo(map);
-      window._me.bindPopup('<div class="pop"><h4>Du er her</h4></div>');
+      window._me.bindPopup('<div class="pop"><h4>'+T().youHere+'</h4></div>');
       map.flyTo([la,lo],15,{duration:.6});
     }
-  },()=>alert('Kunne ikke hente din position.'),{enableHighAccuracy:true});
-});
+  }, err=>{
+    locating=false; locBtn.textContent=orig;
+    geoError(err);
+  }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
+}
+document.getElementById('locate').addEventListener('click',requestLocation);
 
-/* ---------- Weather banner (best-effort) ---------- */
+/* ---------- Weather banner ---------- */
 const WET_CODES=[51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99];
+let wxState=null; // {wet, t}
 function wxEmoji(code,wet){
   if([95,96,99].includes(code)) return '⛈️';
   if([71,73,75,77,85,86].includes(code)) return '❄️';
@@ -1213,43 +1364,67 @@ function wxEmoji(code,wet){
   if([1,2,3].includes(code)) return '⛅';
   return '☀️';
 }
-async function loadWeather(){
+function renderWeather(){
+  if(!wxState) return;
   const el=document.getElementById('weather');
+  const {t,code,wet}=wxState;
+  const emoji=wxEmoji(code,wet);
+  let text, btn='';
+  if(wet){
+    el.classList.add('rain');
+    text=T().wxWet(t);
+    btn=`<button class="wx-btn${indoorOnly?' on':''}" id="wx-indoor">${indoorOnly?T().wxShowAll:T().wxIndoor}</button>`;
+  } else {
+    el.classList.remove('rain');
+    text=T().wxDry(t);
+  }
+  el.innerHTML=`<div class="inner"><span class="wx-emoji">${emoji}</span>
+    <span class="wx-text">${text}</span>${btn}
+    <button class="wx-close" id="wx-close" aria-label="Luk">×</button></div>`;
+  el.hidden=false;
+  const ind=document.getElementById('wx-indoor');
+  if(ind) ind.addEventListener('click',()=>{
+    indoorOnly=!indoorOnly;
+    ind.textContent=indoorOnly?T().wxShowAll:T().wxIndoor;
+    ind.classList.toggle('on',indoorOnly);
+    render();
+  });
+  document.getElementById('wx-close').addEventListener('click',()=>{
+    el.hidden=true; if(indoorOnly){indoorOnly=false;render();}
+  });
+}
+async function loadWeather(){
   try{
     const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.6855&longitude=12.548&current=temperature_2m,precipitation,weather_code&timezone=Europe%2FCopenhagen');
     if(!r.ok) throw 0;
     const d=await r.json();
-    const t=Math.round(d.current.temperature_2m);
     const code=d.current.weather_code;
-    const wet=d.current.precipitation>0 || WET_CODES.includes(code);
-    const emoji=wxEmoji(code,wet);
-    let text, btn='';
-    if(wet){
-      el.classList.add('rain');
-      text=`<b>Det er vådt ude lige nu</b> (${t}°). Måske en indendørs dag?`;
-      btn=`<button class="wx-btn" id="wx-indoor">Vis kun indendørs</button>`;
-    } else {
-      text=`<b>Tørt ude lige nu</b> (${t}°) — fin dag til legepladsen.`;
-    }
-    el.innerHTML=`<div class="inner"><span class="wx-emoji">${emoji}</span>
-      <span class="wx-text">${text}</span>${btn}
-      <button class="wx-close" id="wx-close" aria-label="Luk">×</button></div>`;
-    el.hidden=false;
-    const ind=document.getElementById('wx-indoor');
-    if(ind) ind.addEventListener('click',()=>{
-      indoorOnly=!indoorOnly;
-      ind.textContent=indoorOnly?'Vis alle igen':'Vis kun indendørs';
-      ind.classList.toggle('on',indoorOnly);
-      render();
-    });
-    document.getElementById('wx-close').addEventListener('click',()=>{
-      el.hidden=true; if(indoorOnly){indoorOnly=false;render();}
-    });
-  }catch(e){ el.hidden=true; }
+    wxState={t:Math.round(d.current.temperature_2m), code, wet:(d.current.precipitation>0||WET_CODES.includes(code))};
+    renderWeather();
+  }catch(e){ document.getElementById('weather').hidden=true; }
 }
 
 /* ---------- Map (guarded) ---------- */
 let map;
+function buildPopups(){
+  if(!mapOK) return;
+  PLACES.forEach(p=>{
+    if(!p._marker) return;
+    const c=CATS[p.cat];
+    const th=todayHours(p);
+    const price = p.price==='free'?'<span style="color:#357043;font-weight:700">'+T().free+'</span> · '
+                : p.price==='paid'?'<span style="color:#9a5a12;font-weight:700">'+T().paid+'</span> · ':'';
+    p._marker.setPopupContent(`<div class="pop">
+      <div class="ptag" style="color:${c.color}">${c.emoji} ${catLabel(p.cat)}</div>
+      <h4>${p.pro?'🏆 ':''}${pName(p)}</h4>
+      <p>${pNote(p)}</p>
+      <div class="prow">${price}${p.rating?`★ ${p.rating} · ${p.rc} ${T().reviewsShort}`:''}</div>
+      ${th?`<div class="prow">🕘 ${th} · <a href="${hoursLink(p)}" target="_blank" rel="noopener" style="color:#3E6E8E">${T().currentHoursShort}</a></div>`:''}
+      ${(p.special==='capella')?`<div class="prow">🕘 ${capellaStatus().txt} · <a href="${p.web}" target="_blank" rel="noopener" style="color:#3E6E8E">${T().clubHoursShort}</a></div>`:''}
+      <a href="${mapsLink(p)}" target="_blank" rel="noopener">${T().btnRoute.replace('↳ ','')} →</a>
+    </div>`);
+  });
+}
 function initMap(){
   if(typeof L==='undefined') throw new Error('Leaflet ikke indlæst');
   map = L.map('map',{scrollWheelZoom:true}).setView([55.6855,12.548],14);
@@ -1266,21 +1441,11 @@ function initMap(){
   PLACES.forEach(p=>{
     const c=CATS[p.cat];
     const m=L.marker([p.lat,p.lng],{icon:pinIcon(c.color)}).addTo(map);
-    const th=todayHours(p);
-    const price = p.price==='free'?'<span style="color:#357043;font-weight:700">Gratis</span> · '
-                : p.price==='paid'?'<span style="color:#9a5a12;font-weight:700">Betaling</span> · ':'';
-    m.bindPopup(`<div class="pop">
-      <div class="ptag" style="color:${c.color}">${c.emoji} ${c.label}</div>
-      <h4>${p.pro?'🏆 ':''}${p.n}</h4>
-      <p>${p.note}</p>
-      <div class="prow">${price}${p.rating?`★ ${p.rating} · ${p.rc} anm.`:''}</div>
-      ${th?`<div class="prow">🕘 ${th} · <a href="${hoursLink(p)}" target="_blank" rel="noopener" style="color:#3E6E8E">aktuelle tider</a></div>`:''}
-      ${(p.special==='capella')?`<div class="prow">🕘 ${capellaStatus().txt} · <a href="${p.web}" target="_blank" rel="noopener" style="color:#3E6E8E">klubbens tider</a></div>`:''}
-      <a href="${mapsLink(p)}" target="_blank" rel="noopener">Rutevejledning →</a>
-    </div>`);
+    m.bindPopup('');
     p._marker=m;
   });
   mapOK=true;
+  buildPopups();
   setTimeout(()=>{map.invalidateSize();map.fitBounds(PLACES.map(p=>[p.lat,p.lng]),{padding:[40,40]});},150);
 }
 function mapFailed(){
@@ -1288,8 +1453,7 @@ function mapFailed(){
   const mapDiv=document.getElementById('map');
   if(mapDiv) mapDiv.style.display='none';
   const fb=document.createElement('div');
-  fb.className='map-fallback';
-  fb.innerHTML='<strong>Kortet kunne ikke indlæses her.</strong>Det sker typisk i en forhåndsvisning, der blokerer eksterne kort. Åbn siden i en browser, så virker kortet — listen, afstande og alle ruteknapper virker uanset hvad.';
+  fb.className='map-fallback'; fb.id='map-fallback'; fb.innerHTML=T().mapFail;
   mapWrap.insertBefore(fb, mapWrap.firstChild);
   const vt=document.querySelector('.viewtoggle'); if(vt) vt.style.display='none';
   listEl.hidden=false; mapWrap.hidden=false;
@@ -1300,11 +1464,36 @@ function setupView(){
   else { listEl.hidden=false; mapWrap.hidden=false; setTimeout(()=>map.invalidateSize(),60); }
 }
 
-/* ---------- Footer date ---------- */
-const lu=document.getElementById('lastupd'); if(lu) lu.textContent=LAST_UPDATED;
+/* ---------- Apply language to static chrome ---------- */
+function applyLang(){
+  const tt=T();
+  document.documentElement.lang=LANG;
+  document.getElementById('t-eyebrow').textContent=tt.eyebrow;
+  document.getElementById('t-h1').innerHTML=tt.h1;
+  document.getElementById('t-intro').innerHTML=tt.intro;
+  document.getElementById('t-signature').textContent=tt.signature;
+  document.getElementById('search').placeholder=tt.searchPh;
+  proBtn.textContent=tt.protips; proBtn.classList.toggle('active',proOnly);
+  sortBtn.textContent=tt.sortnear; sortBtn.classList.toggle('active',sortNear&&!!userPos);
+  document.getElementById('t-opennow').textContent=tt.opennow;
+  tabList.textContent=tt.tabList; tabMap.textContent=tt.tabMap;
+  document.getElementById('locate').textContent=tt.locate;
+  document.getElementById('t-footer').innerHTML=tt.footer(tt.lastUpdated);
+  const fb=document.getElementById('map-fallback'); if(fb) fb.innerHTML=tt.mapFail;
+  buildChips(); buildLegend(); buildPopups(); renderWeather(); render();
+}
+
+/* ---------- Language toggle ---------- */
+document.getElementById('langtoggle').addEventListener('click',e=>{
+  const btn=e.target.closest('button'); if(!btn) return;
+  const lang=btn.dataset.lang; if(lang===LANG) return;
+  LANG=lang;
+  [...document.querySelectorAll('#langtoggle button')].forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG));
+  applyLang();
+});
 
 /* ---------- Boot ---------- */
-render();
+applyLang();
 try { initMap(); setupView(); }
 catch(e){ console.warn('Map init failed:', e); mapFailed(); }
 window.addEventListener('resize',setupView);
