@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta property="og:title" content="Børneguide · Åboulevarden &amp; indre Nørrebro">
+<meta property="og:description" content="Legepladser, indendørs leg, biblioteker og caféer i kvarteret — med kort, åbningstider og afstande.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://simon-jensen.github.io/boerneguide/">
+<meta name="twitter:card" content="summary">
 <title>Børneguide · Åboulevarden & indre Nørrebro</title>
 <style>
 /* required styles */
@@ -975,6 +980,7 @@ const I18N = {
     bOutdoor:'Udendørs', bClosedToday:'Lukket i dag', bClosedNow:'Lukket nu', bSeeMore:'Se mere',
     bOpenUntil:t=>'Åben nu · til '+t,
     cWeekend:'Åben (weekend)', cAfterClub:'Åben nu · efter klubluk', cClubUses:t=>'Klub bruger den · fri efter '+t,
+    cInstUses:'Institutionen bruger den · åben i weekenden',
     free:'Gratis', paid:'Betaling', pusle:'🚼 Pusleplads',
     walk:'min gang', today:(a,b)=>'I dag '+a+'–'+b, closedToday:'Lukket i dag',
     hoursLink:'aktuelle tider ↗', clubHoursLink:'klubbens åbningstider ↗', clubHoursShort:'klubbens tider',
@@ -1008,6 +1014,7 @@ const I18N = {
     bOutdoor:'Outdoors', bClosedToday:'Closed today', bClosedNow:'Closed now', bSeeMore:'See more',
     bOpenUntil:t=>'Open now · until '+t,
     cWeekend:'Open (weekend)', cAfterClub:'Open now · after club closes', cClubUses:t=>'Club is using it · free after '+t,
+    cInstUses:'Institution is using it · open at weekends',
     free:'Free', paid:'Paid', pusle:'🚼 Changing table',
     walk:'min walk', today:(a,b)=>'Today '+a+'–'+b, closedToday:'Closed today',
     hoursLink:'current hours ↗', clubHoursLink:'club opening hours ↗', clubHoursShort:'club hours',
@@ -1060,7 +1067,7 @@ const PLACES = [
    rating:2.7, rc:3, price:'free', hours:[null,[600,1080],[600,1080],[600,1080],[600,1080],[600,1080],null]},
   {n:'Linden – Kapelvej', n_en:'Linden – Kapelvej', cat:'legeplads', pro:true, lat:55.6877746, lng:12.552335, adr:'Kapelvej 36, København N',
    note:'Institution — legepladsen er åben i weekenderne, når institutionen er lukket.',
-   note_en:'Daycare institution — the playground is open at weekends, when the institution is closed.', type:'outdoor', price:'free'},
+   note_en:'Daycare institution — the playground is open at weekends, when the institution is closed.', special:'linden', price:'free'},
   {n:'Flyverlegepladsen – Stefansgade', n_en:'Flyverlegepladsen playground – Stefansgade', cat:'legeplads', lat:55.6942562, lng:12.5422289, adr:'Stefansgade 28-30, København N',
    note:'Stor legeplads i Nørrebroparken. Bemandet på hverdage, indendørsområde og smådyr. En af de bedste i byen.',
    note_en:'Large playground in Nørrebroparken. Staffed on weekdays, indoor area and small animals. One of the best in the city.',
@@ -1118,8 +1125,8 @@ const PLACES = [
    rating:3.6, rc:25, web:'https://emmerys.dk/', indoor:true,
    hours:[[420,1020],[420,1080],[420,1080],[420,1080],[420,1080],[420,1080],[420,1020]]},
   {n:'Capella – Kapelvej', n_en:'Capella – Kapelvej', cat:'legeplads', pro:true, lat:55.68817, lng:12.552255, adr:'Kapelvej 32, København N',
-   note:'Fritidsklub for Blågårds Skole — udearealerne er åbne for alle, når klubben ikke bruger dem (efter luk og i weekenden). Lille boldbur med fodboldmål og basketkurve, bålhytte og naturlegeplads med forhindringsbane, rutsjebane, rebgynger, legetræhytter, lille trampolin og svævebane. Lige ved Assistens — god skygge fra træerne om sommeren.',
-   note_en:"After-school club for Blågårds Skole — the outdoor areas are open to everyone when the club isn't using them (after closing and at weekends). Small ball cage with football goals and basketball hoops, a campfire hut and a nature playground with an obstacle course, slide, rope swings, play tree huts, a small trampoline and a zipline. Right by Assistens — good shade from the trees in summer.",
+   note:'Fritidsklub for Blågårds Skole — udearealerne er åbne for alle, når klubben ikke bruger dem (efter luk og i weekenden). Lille boldbur med fodboldmål og basketkurve, bålhytte og naturlegeplads med forhindringsbane, rutsjebane, rebgynger, legetræhytter, lille trampolin og svævebane. Lige ved Assistens — god skygge fra træerne om sommeren. OBS: i skoleferier kan klubben bruge arealerne hele dagen.',
+   note_en:"After-school club for Blågårds Skole — the outdoor areas are open to everyone when the club isn't using them (after closing and at weekends). Small ball cage with football goals and basketball hoops, a campfire hut and a nature playground with an obstacle course, slide, rope swings, play tree huts, a small trampoline and a zipline. Right by Assistens — good shade from the trees in summer. Note: during school holidays the club may use the areas all day.",
    special:'capella', price:'free',
    web:'https://kvisten-kk.aula.dk/capella/capellas-aabningstider'},
   {n:'Felt/Megaron – Assistens', n_en:'Felt/Megaron – Assistens', cat:'legeplads', pro:true, lat:55.6911314, lng:12.547944, adr:'Kapelvej 4, Assistens Kirkegård, København N',
@@ -1139,11 +1146,18 @@ function capellaStatus(){
   return {cls:'closed', txt:T().cClubUses(fmt(clubCloses)), open:false};
 }
 
+function lindenStatus(){
+  const day=new Date().getDay();
+  if(day===0||day===6) return {cls:'open', txt:T().cWeekend, open:true};
+  return {cls:'closed', txt:T().cInstUses, open:false};
+}
+
 /* ---------- Helpers ---------- */
 function nowMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
 function fmt(m){const h=Math.floor(m/60),mm=m%60;return h+(mm?'.'+String(mm).padStart(2,'0'):'');}
 function status(p){
   if(p.special==='capella') return capellaStatus();
+  if(p.special==='linden') return lindenStatus();
   if(p.type==='outdoor') return {cls:'outdoor', txt:T().bOutdoor, open:true};
   if(p.type==='info' || !p.hours) return {cls:'info', txt:T().bSeeMore, open:true};
   const today=p.hours[new Date().getDay()];
@@ -1229,6 +1243,10 @@ function render(){
         <a class="btn btn-route" href="${mapsLink(p)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${T().btnRoute}</a>
         ${p.web?`<a class="btn btn-web" href="${p.web}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${T().btnWeb}</a>`:''}
       </div>`;
+    card.setAttribute('role','button'); card.tabIndex=0;
+    card.addEventListener('keydown',e=>{
+      if(e.target===card && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); card.click(); }
+    });
     card.addEventListener('click',()=>{
       if(activeCard) activeCard.classList.remove('active');
       card.classList.add('active'); activeCard=card;
@@ -1256,9 +1274,11 @@ function buildChips(){
     const b=document.createElement('button');
     b.className='chip'+(activeCats.has(key)?' active':''); b.style.setProperty('--c',c.color);
     b.innerHTML=`<span class="dot"></span>${catLabel(key)}`;
+    b.setAttribute('aria-pressed', activeCats.has(key));
     b.addEventListener('click',()=>{
       if(activeCats.has(key)){activeCats.delete(key);b.classList.remove('active');}
       else{activeCats.add(key);b.classList.add('active');}
+      b.setAttribute('aria-pressed', activeCats.has(key));
       render();
     });
     chipsEl.appendChild(b);
@@ -1279,13 +1299,16 @@ function buildLegend(){
 /* ---------- Controls ---------- */
 document.getElementById('search').addEventListener('input',e=>{query=e.target.value.toLowerCase().trim();render();});
 const onEl=document.getElementById('opennow');
-onEl.addEventListener('click',()=>{onlyOpen=!onlyOpen;onEl.classList.toggle('on',onlyOpen);render();});
+onEl.setAttribute('aria-pressed','false');
+onEl.addEventListener('click',()=>{onlyOpen=!onlyOpen;onEl.classList.toggle('on',onlyOpen);onEl.setAttribute('aria-pressed',onlyOpen);render();});
+sortBtn.setAttribute('aria-pressed','false');
 sortBtn.addEventListener('click',()=>{
   if(!userPos){ requestLocation(); return; }   // intet at sortere efter endnu → hent position
-  sortNear=!sortNear; sortBtn.classList.toggle('active',sortNear); render();
+  sortNear=!sortNear; sortBtn.classList.toggle('active',sortNear); sortBtn.setAttribute('aria-pressed',sortNear); render();
 });
 const proBtn=document.getElementById('protips');
-proBtn.addEventListener('click',()=>{proOnly=!proOnly;proBtn.classList.toggle('active',proOnly);render();});
+proBtn.setAttribute('aria-pressed','false');
+proBtn.addEventListener('click',()=>{proOnly=!proOnly;proBtn.classList.toggle('active',proOnly);proBtn.setAttribute('aria-pressed',proOnly);render();});
 
 /* ---------- Mobile tabs ---------- */
 const tabList=document.getElementById('tab-list'), tabMap=document.getElementById('tab-map');
@@ -1299,7 +1322,7 @@ tabMap.addEventListener('click',showMap);
 function applyDistances(la,lo){
   PLACES.forEach(p=>{p._dist=haversine(la,lo,p.lat,p.lng);});
   userPos=[la,lo];
-  sortNear=true; sortBtn.hidden=false; sortBtn.classList.add('active');
+  sortNear=true; sortBtn.classList.add('active'); sortBtn.setAttribute('aria-pressed','true');
   render();
 }
 function geoError(err){
@@ -1421,6 +1444,7 @@ function buildPopups(){
       <div class="prow">${price}${p.rating?`★ ${p.rating} · ${p.rc} ${T().reviewsShort}`:''}</div>
       ${th?`<div class="prow">🕘 ${th} · <a href="${hoursLink(p)}" target="_blank" rel="noopener" style="color:#3E6E8E">${T().currentHoursShort}</a></div>`:''}
       ${(p.special==='capella')?`<div class="prow">🕘 ${capellaStatus().txt} · <a href="${p.web}" target="_blank" rel="noopener" style="color:#3E6E8E">${T().clubHoursShort}</a></div>`:''}
+      ${(p.special==='linden')?`<div class="prow">🕘 ${lindenStatus().txt}</div>`:''}
       <a href="${mapsLink(p)}" target="_blank" rel="noopener">${T().btnRoute.replace('↳ ','')} →</a>
     </div>`);
   });
@@ -1498,6 +1522,10 @@ try { initMap(); setupView(); }
 catch(e){ console.warn('Map init failed:', e); mapFailed(); }
 window.addEventListener('resize',setupView);
 loadWeather();
+
+/* Genberegn åben/lukket-status — kun mens fanen faktisk er synlig */
+setInterval(()=>{ if(document.visibilityState==='visible') render(); }, 60000);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') render(); });
 
 </script>
 </body>
