@@ -837,6 +837,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .locate:hover{border-color:var(--green);color:var(--green)}
   /* Leaflet pin + popup */
   .marker-pin{filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}
+  .marker-new{position:relative}
+  .marker-new .newdot{position:absolute;top:-8px;right:-11px;background:#C8633F;color:#fff;
+    font-size:9px;font-weight:800;letter-spacing:.3px;padding:2px 5px;border-radius:9px;
+    border:1.5px solid #fff;line-height:1;animation:nypulse 1.6s ease-in-out infinite}
+  @keyframes nypulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+  @media (prefers-reduced-motion: reduce){.marker-new .newdot{animation:none}}
   .leaflet-popup-content-wrapper{border-radius:14px;box-shadow:var(--shadow)}
   .leaflet-popup-content{margin:14px 16px;font-family:'Mulish',sans-serif}
   .pop h4{font-family:'Fraunces',serif;font-weight:600;font-size:1.08rem;margin-bottom:5px;color:var(--ink)}
@@ -993,7 +999,7 @@ const I18N = {
     youHere:'Du er her',
     mapFail:'<strong>Kortet kunne ikke indlæses her.</strong>Det sker typisk i en forhåndsvisning, der blokerer eksterne kort. Åbn siden i en browser, så virker kortet — listen, afstande og alle ruteknapper virker uanset hvad.',
     footer:date=>`Lavet som en delevenlig kvartersguide · Sidst opdateret ${date} · Kortdata © OpenStreetMap-bidragydere © CARTO · Åbningstider, priser og vurderinger er vejledende — tjek altid “aktuelle tider” inden et besøg.`,
-    lastUpdated:'30. maj 2026',
+    lastUpdated:'23. juli 2026',
     cats:{legeplads:'Legeplads', indendoers:'Indendørs leg', bibliotek:'Bibliotek', cafe:'Café & grønt', sport:'Sport & camps'}
   },
   en:{
@@ -1027,7 +1033,7 @@ const I18N = {
     youHere:'You are here',
     mapFail:"<strong>The map couldn't load here.</strong>This usually happens in a preview that blocks external maps. Open the page in a browser and the map will work — the list, distances and all directions buttons work regardless.",
     footer:date=>`Made as a shareable neighbourhood guide · Last updated ${date} · Map data © OpenStreetMap contributors © CARTO · Opening hours, prices and ratings are indicative — always check “current hours” before a visit.`,
-    lastUpdated:'30 May 2026',
+    lastUpdated:'23 July 2026',
     cats:{legeplads:'Playground', indendoers:'Indoor play', bibliotek:'Library', cafe:'Café & green', sport:'Sport & camps'}
   }
 };
@@ -1100,7 +1106,7 @@ const PLACES = [
    note_en:'Small playground inside the mall. Good changing facilities by the baby lounge — nice in the rain.',
    rating:4.2, rc:9117, web:'https://frbc-shopping.dk/', indoor:true, pusle:true, price:'free',
    hours:[[600,1080],[600,1140],[600,1140],[600,1140],[600,1140],[600,1140],[600,1080]]},
-  {n:'Legeplads – Kejserinde Dagmars Plads', n_en:'Playground – Kejserinde Dagmars Plads', cat:'legeplads', lat:55.6812994, lng:12.5353072, adr:'Kejserinde Dagmars Plads 6, Frederiksberg',
+  {n:'Legeplads – Kejserinde Dagmars Plads', n_en:'Playground – Kejserinde Dagmars Plads', cat:'legeplads', added:'2026-07-23', lat:55.6812994, lng:12.5353072, adr:'Kejserinde Dagmars Plads 6, Frederiksberg',
    note:'Godt lille sted, hvis man alligevel er ved Frederiksberg Centret. Flotte, nye legeting (renoveret 2019) — bl.a. et sejt skib man kan klatre på, sandkasse, trampolin og karrusel. Bedst for ca. 2–4 år.',
    note_en:"A good little spot if you're near Frederiksberg Centret anyway. Great new play equipment (renovated 2019) — including a cool ship to climb, a sandpit, trampoline and carousel. Best for ages ~2–4.",
    type:'outdoor', price:'free'},
@@ -1154,6 +1160,11 @@ function lindenStatus(){
   const day=new Date().getDay();
   if(day===0||day===6) return {cls:'open', txt:T().cWeekend, open:true};
   return {cls:'closed', txt:T().cInstUses, open:false};
+}
+
+/* "NY"-mærke på nyligt tilføjede steder — forsvinder af sig selv efter 21 dage */
+function isNew(p){
+  return !!p.added && (Date.now()-new Date(p.added+'T00:00:00'))/86400000 < 21;
 }
 
 /* ---------- Helpers ---------- */
@@ -1459,16 +1470,16 @@ function initMap(){
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     attribution:'© OpenStreetMap © CARTO', maxZoom:19
   }).addTo(map);
-  const pinIcon=color=>L.divIcon({
-    className:'marker-pin', iconSize:[30,42], iconAnchor:[15,42], popupAnchor:[0,-38],
+  const pinIcon=(color,fresh)=>L.divIcon({
+    className:'marker-pin'+(fresh?' marker-new':''), iconSize:[30,42], iconAnchor:[15,42], popupAnchor:[0,-38],
     html:`<svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
       <path d="M15 1C7.5 1 1.5 7 1.5 14.5 1.5 25 15 41 15 41S28.5 25 28.5 14.5C28.5 7 22.5 1 15 1Z"
         fill="${color}" stroke="#fff" stroke-width="2.2"/>
-      <circle cx="15" cy="14.5" r="5" fill="#fff"/></svg>`
+      <circle cx="15" cy="14.5" r="5" fill="#fff"/></svg>${fresh?'<span class="newdot">NY</span>':''}`
   });
   PLACES.forEach(p=>{
     const c=CATS[p.cat];
-    const m=L.marker([p.lat,p.lng],{icon:pinIcon(c.color)}).addTo(map);
+    const m=L.marker([p.lat,p.lng],{icon:pinIcon(c.color,isNew(p))}).addTo(map);
     m.bindPopup('');
     p._marker=m;
   });
