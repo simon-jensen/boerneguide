@@ -809,6 +809,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .badge.closed{background:rgba(200,99,63,.14);color:#a3431f}
   .badge.outdoor{background:rgba(62,110,142,.12);color:#345b75}
   .badge.info{background:var(--paper-2);color:var(--ink-soft)}
+  .badge.reopened{background:var(--green);color:#fff;font-size:.74rem;padding:5px 11px;
+    animation:reopenpulse 1.8s ease-in-out infinite}
+  .badge-row{display:inline-flex;gap:6px;flex-shrink:0}
+  .card-reopened{border:2px solid var(--green);background:#F3F8F3;box-shadow:0 0 0 4px rgba(79,138,91,.12)}
+  .pop .badge.reopened{display:inline-block;margin:2px 0 4px}
+  @keyframes reopenpulse{0%,100%{box-shadow:0 0 0 0 rgba(79,138,91,.55);transform:scale(1)}50%{box-shadow:0 0 0 8px rgba(79,138,91,0);transform:scale(1.06)}}
+  @media (prefers-reduced-motion: reduce){.badge.reopened{animation:none}}
   .tag{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;color:var(--c)}
   .note{margin-top:9px;font-size:.92rem;color:var(--ink-soft)}
   .meta{margin-top:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--ink-soft)}
@@ -837,12 +844,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .locate:hover{border-color:var(--green);color:var(--green)}
   /* Leaflet pin + popup */
   .marker-pin{filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}
-  .marker-new{position:relative}
-  .marker-new .newdot{position:absolute;top:-8px;right:-11px;background:#C8633F;color:#fff;
+  .marker-new,.marker-reopened{position:relative}
+  .marker-new .newdot,.marker-reopened .newdot{position:absolute;top:-8px;right:-11px;background:#C8633F;color:#fff;
     font-size:9px;font-weight:800;letter-spacing:.3px;padding:2px 5px;border-radius:9px;
     border:1.5px solid #fff;line-height:1;animation:nypulse 1.6s ease-in-out infinite}
   @keyframes nypulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
-  @media (prefers-reduced-motion: reduce){.marker-new .newdot{animation:none}}
+  .marker-reopened .newdot.reopen{background:#4F8A5B;right:auto;left:50%;top:-14px;transform:translateX(-50%);
+    font-size:10px;padding:3px 7px;white-space:nowrap;animation:reopenpin 1.4s ease-in-out infinite}
+  @keyframes reopenpin{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.2)}}
+  @media (prefers-reduced-motion: reduce){.marker-reopened .newdot.reopen{animation:none}}
+  @media (prefers-reduced-motion: reduce){.marker-new .newdot,.marker-reopened .newdot{animation:none}}
   .leaflet-popup-content-wrapper{border-radius:14px;box-shadow:var(--shadow)}
   .leaflet-popup-content{margin:14px 16px;font-family:'Mulish',sans-serif}
   .pop h4{font-family:'Fraunces',serif;font-weight:600;font-size:1.08rem;margin-bottom:5px;color:var(--ink)}
@@ -983,7 +994,7 @@ const I18N = {
     placeOne:'sted', placeMany:'steder', shown:'vist', nearestFirst:'nærmest først',
     empty:'Ingen steder matcher — prøv at fjerne et filter.',
     proNote:'🏆 <b>Pro tips</b> — vores egne favoritter i kvarteret: små, gode steder, som man nok ikke selv falder over.',
-    bOutdoor:'Udendørs', bClosedToday:'Lukket i dag', bClosedNow:'Lukket nu', bSeeMore:'Se mere',
+    bOutdoor:'Udendørs', bClosedToday:'Lukket i dag', bClosedNow:'Lukket nu', bSeeMore:'Se mere', bReopened:'🎉 ÅBEN IGEN', pinReopened:'ÅBEN IGEN!',
     bOpenUntil:t=>'Åben nu · til '+t,
     cWeekend:'Åben (weekend)', cAfterClub:'Åben nu · efter klubluk', cClubUses:t=>'Klub bruger den · fri efter '+t,
     cInstUses:'Institutionen bruger den · åben i weekenden',
@@ -999,7 +1010,7 @@ const I18N = {
     youHere:'Du er her',
     mapFail:'<strong>Kortet kunne ikke indlæses her.</strong>Det sker typisk i en forhåndsvisning, der blokerer eksterne kort. Åbn siden i en browser, så virker kortet — listen, afstande og alle ruteknapper virker uanset hvad.',
     footer:date=>`Lavet som en delevenlig kvartersguide · Sidst opdateret ${date} · Kortdata © OpenStreetMap-bidragydere © CARTO · Åbningstider, priser og vurderinger er vejledende — tjek altid “aktuelle tider” inden et besøg.`,
-    lastUpdated:'23. juli 2026',
+    lastUpdated:'5. september 2026',
     cats:{legeplads:'Legeplads', indendoers:'Indendørs leg', bibliotek:'Bibliotek', cafe:'Café & grønt', sport:'Sport & camps'}
   },
   en:{
@@ -1017,7 +1028,7 @@ const I18N = {
     placeOne:'place', placeMany:'places', shown:'shown', nearestFirst:'nearest first',
     empty:'No places match — try removing a filter.',
     proNote:"🏆 <b>Pro tips</b> — our own favourites in the neighbourhood: small, great spots you probably wouldn't find on your own.",
-    bOutdoor:'Outdoors', bClosedToday:'Closed today', bClosedNow:'Closed now', bSeeMore:'See more',
+    bOutdoor:'Outdoors', bClosedToday:'Closed today', bClosedNow:'Closed now', bSeeMore:'See more', bReopened:'🎉 OPEN AGAIN', pinReopened:'OPEN AGAIN!',
     bOpenUntil:t=>'Open now · until '+t,
     cWeekend:'Open (weekend)', cAfterClub:'Open now · after club closes', cClubUses:t=>'Club is using it · free after '+t,
     cInstUses:'Institution is using it · open at weekends',
@@ -1033,7 +1044,7 @@ const I18N = {
     youHere:'You are here',
     mapFail:"<strong>The map couldn't load here.</strong>This usually happens in a preview that blocks external maps. Open the page in a browser and the map will work — the list, distances and all directions buttons work regardless.",
     footer:date=>`Made as a shareable neighbourhood guide · Last updated ${date} · Map data © OpenStreetMap contributors © CARTO · Opening hours, prices and ratings are indicative — always check “current hours” before a visit.`,
-    lastUpdated:'23 July 2026',
+    lastUpdated:'5 September 2026',
     cats:{legeplads:'Playground', indendoers:'Indoor play', bibliotek:'Library', cafe:'Café & green', sport:'Sport & camps'}
   }
 };
@@ -1063,9 +1074,9 @@ const PLACES = [
    note:'Endnu ikke prøvet. Hold og kurser for forældre og baby (rytmik, motorik, massage m.m.).',
    note_en:'Not tried yet. Classes and courses for parents and baby (rhythm, motor skills, massage etc.).',
    rating:4.8, rc:94, web:'http://www.kidskollektive.dk/', type:'info', indoor:true, price:'paid'},
-  {n:'Legeplads – Hans Tavsens Gade', n_en:'Playground – Hans Tavsens Gade', cat:'legeplads', lat:55.6884059, lng:12.5494424, adr:'Hans Tavsens Gade 10, København N',
-   note:'“Vores egen” legeplads — men under ombygning pt. Bemandet på hverdage og med indendørsområde. Stor og varieret.',
-   note_en:'“Our own” playground — but under renovation right now. Staffed on weekdays and with an indoor area. Big and varied.',
+  {n:'Legeplads – Hans Tavsens Gade', n_en:'Playground – Hans Tavsens Gade', cat:'legeplads', reopened:'2026-09-05', lat:55.6884059, lng:12.5494424, adr:'Hans Tavsens Gade 10, København N',
+   note:'“Vores egen” legeplads — <b>åben igen</b> efter ombygningen med nye legeredskaber og lang balancebane. Hus, indendørsområde og bemanding følger senere på året. Stor og varieret.',
+   note_en:'“Our own” playground — <b>open again</b> after the renovation with new play equipment and a long balance course. House, indoor area and staff follow later this year. Big and varied.',
    rating:4.5, rc:99, type:'outdoor', price:'free'},
   {n:'Minigolf – Hans Tavsens Park', n_en:'Minigolf – Hans Tavsens Park', cat:'sport', lat:55.6900579, lng:12.5460078, adr:'Hans Tavsens Gade 40, København N',
    note:'Minigolf + trampoliner op mod Nørrebro Park Skole. Kan være lidt slidt eller lukket — tjek før I tager afsted.',
@@ -1166,6 +1177,10 @@ function lindenStatus(){
 function isNew(p){
   return !!p.added && (Date.now()-new Date(p.added+'T00:00:00'))/86400000 < 21;
 }
+/* "Åben igen"-mærke på steder der er genåbnet — forsvinder af sig selv efter 30 dage */
+function isReopened(p){
+  return !!p.reopened && (Date.now()-new Date(p.reopened+'T00:00:00'))/86400000 < 30;
+}
 
 /* ---------- Helpers ---------- */
 function nowMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
@@ -1240,12 +1255,12 @@ function render(){
     if(p.pusle) amen.push('<span class="amenity">'+T().pusle+'</span>');
     if(p._dist!=null) amen.push('<span class="amenity dist">📍 '+fmtDist(p._dist)+' · '+walkMin(p._dist)+' '+T().walk+'</span>');
     const card=document.createElement('div');
-    card.className='card'; card.style.setProperty('--c',c.color);
+    card.className='card'+(isReopened(p)?' card-reopened':''); card.style.setProperty('--c',c.color);
     card.innerHTML=`
       <h3 class="card-title">${p.pro?'<span class="pro-star" title="Pro tip">🏆</span> ':''}${pName(p)}</h3>
       <div class="card-sub">
         <span class="tag" style="--c:${c.color}">${c.emoji} ${catLabel(p.cat)}</span>
-        <span class="badge ${st.cls}">${st.txt}</span>
+        <span class="badge-row">${isReopened(p)?`<span class="badge reopened">${T().bReopened}</span>`:''}<span class="badge ${st.cls}">${st.txt}</span></span>
       </div>
       <div class="note">${pNote(p)}</div>
       ${amen.length?`<div class="amenities">${amen.join('')}</div>`:''}
@@ -1455,6 +1470,7 @@ function buildPopups(){
     p._marker.setPopupContent(`<div class="pop">
       <div class="ptag" style="color:${c.color}">${c.emoji} ${catLabel(p.cat)}</div>
       <h4>${p.pro?'🏆 ':''}${pName(p)}</h4>
+      ${isReopened(p)?`<span class="badge reopened">${T().bReopened}</span>`:''}
       <p>${pNote(p)}</p>
       <div class="prow">${price}${p.rating?`★ ${p.rating} · ${p.rc} ${T().reviewsShort}`:''}</div>
       ${th?`<div class="prow">🕘 ${th} · <a href="${hoursLink(p)}" target="_blank" rel="noopener" style="color:#3E6E8E">${T().currentHoursShort}</a></div>`:''}
@@ -1470,16 +1486,16 @@ function initMap(){
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     attribution:'© OpenStreetMap © CARTO', maxZoom:19
   }).addTo(map);
-  const pinIcon=(color,fresh)=>L.divIcon({
-    className:'marker-pin'+(fresh?' marker-new':''), iconSize:[30,42], iconAnchor:[15,42], popupAnchor:[0,-38],
+  const pinIcon=(color,fresh,reopened)=>L.divIcon({
+    className:'marker-pin'+(fresh?' marker-new':'')+(reopened?' marker-reopened':''), iconSize:[30,42], iconAnchor:[15,42], popupAnchor:[0,-38],
     html:`<svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
       <path d="M15 1C7.5 1 1.5 7 1.5 14.5 1.5 25 15 41 15 41S28.5 25 28.5 14.5C28.5 7 22.5 1 15 1Z"
         fill="${color}" stroke="#fff" stroke-width="2.2"/>
-      <circle cx="15" cy="14.5" r="5" fill="#fff"/></svg>${fresh?'<span class="newdot">NY</span>':''}`
+      <circle cx="15" cy="14.5" r="5" fill="#fff"/></svg>${fresh?'<span class="newdot">NY</span>':''}${reopened&&!fresh?'<span class="newdot reopen">'+T().pinReopened+'</span>':''}`
   });
   PLACES.forEach(p=>{
     const c=CATS[p.cat];
-    const m=L.marker([p.lat,p.lng],{icon:pinIcon(c.color,isNew(p))}).addTo(map);
+    const m=L.marker([p.lat,p.lng],{icon:pinIcon(c.color,isNew(p),isReopened(p))}).addTo(map);
     m.bindPopup('');
     p._marker=m;
   });
