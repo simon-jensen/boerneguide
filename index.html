@@ -1009,7 +1009,7 @@ const I18N = {
     wxIndoor:'Vis kun indendørs', wxShowAll:'Vis alle igen',
     youHere:'Du er her',
     mapFail:'<strong>Kortet kunne ikke indlæses her.</strong>Det sker typisk i en forhåndsvisning, der blokerer eksterne kort. Åbn siden i en browser, så virker kortet — listen, afstande og alle ruteknapper virker uanset hvad.',
-    footer:date=>`Lavet som en delevenlig kvartersguide · Sidst opdateret ${date} · Kortdata © OpenStreetMap-bidragydere © CARTO · Åbningstider, priser og vurderinger er vejledende — tjek altid “aktuelle tider” inden et besøg.`,
+    footer:date=>`Lavet som en delevenlig kvartersguide · Sidst opdateret ${date} · Kortdata © OpenStreetMap-bidragydere · Åbningstider, priser og vurderinger er vejledende — tjek altid “aktuelle tider” inden et besøg.`,
     lastUpdated:'22. september 2026',
     cats:{legeplads:'Legeplads', indendoers:'Indendørs leg', bibliotek:'Bibliotek', cafe:'Café & grønt', sport:'Sport & camps'}
   },
@@ -1043,7 +1043,7 @@ const I18N = {
     wxIndoor:'Show indoor only', wxShowAll:'Show all again',
     youHere:'You are here',
     mapFail:"<strong>The map couldn't load here.</strong>This usually happens in a preview that blocks external maps. Open the page in a browser and the map will work — the list, distances and all directions buttons work regardless.",
-    footer:date=>`Made as a shareable neighbourhood guide · Last updated ${date} · Map data © OpenStreetMap contributors © CARTO · Opening hours, prices and ratings are indicative — always check “current hours” before a visit.`,
+    footer:date=>`Made as a shareable neighbourhood guide · Last updated ${date} · Map data © OpenStreetMap contributors · Opening hours, prices and ratings are indicative — always check “current hours” before a visit.`,
     lastUpdated:'22 September 2026',
     cats:{legeplads:'Playground', indendoers:'Indoor play', bibliotek:'Library', cafe:'Café & green', sport:'Sport & camps'}
   }
@@ -1494,8 +1494,9 @@ function buildPopups(){
 function initMap(){
   if(typeof L==='undefined') throw new Error('Leaflet ikke indlæst');
   map = L.map('map',{scrollWheelZoom:true}).setView([55.6855,12.548],14);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-    attribution:'© OpenStreetMap © CARTO', maxZoom:19
+  /* OpenStreetMaps egne fliser — CARTO's gratis fliser kræver nu API-nøgle og vises ellers med vandmærke */
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap contributors', maxZoom:19
   }).addTo(map);
   const pinIcon=(color,fresh,reopened)=>L.divIcon({
     className:'marker-pin'+(fresh?' marker-new':'')+(reopened?' marker-reopened':''), iconSize:[30,42], iconAnchor:[15,42], popupAnchor:[0,-38],
