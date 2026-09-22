@@ -1010,7 +1010,7 @@ const I18N = {
     youHere:'Du er her',
     mapFail:'<strong>Kortet kunne ikke indlæses her.</strong>Det sker typisk i en forhåndsvisning, der blokerer eksterne kort. Åbn siden i en browser, så virker kortet — listen, afstande og alle ruteknapper virker uanset hvad.',
     footer:date=>`Lavet som en delevenlig kvartersguide · Sidst opdateret ${date} · Kortdata © OpenStreetMap-bidragydere © CARTO · Åbningstider, priser og vurderinger er vejledende — tjek altid “aktuelle tider” inden et besøg.`,
-    lastUpdated:'5. september 2026',
+    lastUpdated:'22. september 2026',
     cats:{legeplads:'Legeplads', indendoers:'Indendørs leg', bibliotek:'Bibliotek', cafe:'Café & grønt', sport:'Sport & camps'}
   },
   en:{
@@ -1044,7 +1044,7 @@ const I18N = {
     youHere:'You are here',
     mapFail:"<strong>The map couldn't load here.</strong>This usually happens in a preview that blocks external maps. Open the page in a browser and the map will work — the list, distances and all directions buttons work regardless.",
     footer:date=>`Made as a shareable neighbourhood guide · Last updated ${date} · Map data © OpenStreetMap contributors © CARTO · Opening hours, prices and ratings are indicative — always check “current hours” before a visit.`,
-    lastUpdated:'5 September 2026',
+    lastUpdated:'22 September 2026',
     cats:{legeplads:'Playground', indendoers:'Indoor play', bibliotek:'Library', cafe:'Café & green', sport:'Sport & camps'}
   }
 };
@@ -1061,6 +1061,7 @@ const CATS = {
 const catLabel = key => T().cats[key];
 
 /* hours[] indexed by JS getDay(): 0=Søn,1=Man … 6=Lør. [openMin,closeMin] or null=lukket. */
+/* added:'YYYY-MM-DD' giver NY-mærke i 21 dage · hoursUrl overstyrer "aktuelle tider"-linket (ellers Google Maps). */
 const PLACES = [
   {n:'Legeplads – Steenwinkelsvej', n_en:'Playground – Steenwinkelsvej', cat:'legeplads', pro:true, lat:55.6837593, lng:12.5486113, adr:'Steenwinkelsvej 20, Frederiksberg',
    note:'Lille, hyggelig legeplads. Fin til et hurtigt stop.',
@@ -1153,7 +1154,17 @@ const PLACES = [
   {n:'Felt/Megaron – Assistens', n_en:'Felt/Megaron – Assistens', cat:'legeplads', pro:true, lat:55.6911314, lng:12.547944, adr:'Kapelvej 4, Assistens Kirkegård, København N',
    note:'Et hyggeligt lille legested/kunstværk inde på Assistens. Stenene rokker, hvilket børn synes er sjovt. Fint at lægge vejen forbi, hvis I alligevel er på tur i Assistens.',
    note_en:"A cosy little play spot/artwork inside Assistens. The stones rock, which children find fun. Nice to swing by if you're already out for a walk in Assistens.",
-   type:'outdoor', price:'free'}
+   type:'outdoor', price:'free'},
+  {n:'Legeland – Grøndal MultiCenter', n_en:'Legeland – Grøndal MultiCenter', cat:'indendoers', added:'2026-09-22', lat:55.69995, lng:12.51555, adr:'Hvidkildevej 64, København NV',
+   note:'Kommunalt indendørs legeland — endnu ikke prøvet. Forhindringsbaner, boldbassin og rutsjebaner, med eget område til de mindste (bygget til børn til og med 10 år). 78 kr. pr. barn. <b>OBS: billetten gælder ét fast hold på 90 min</b> — 8–9.30, 9.30–11, 11.30–13, 13.30–15, 15.30–17 og 17.30–19. Mellem holdene rydder personalet op og lukker et nyt hold ind, så køb billet til et hold, I kan nå fra start — kommer man sidst i et hold, har man betalt for tid, der næsten er gået. Helligdage 9.30–17. Ca. 15 min på cykel fra Nørrebro. Egen mad må ikke tages med ind, men der er café i centret.',
+   note_en:"Municipal indoor playland — not tried yet. Obstacle courses, ball pit and slides, with a separate area for the little ones (built for kids up to and including 10). 78 kr per child. <b>Note: a ticket is for one fixed 90-minute slot</b> — 8–9.30, 9.30–11, 11.30–13, 13.30–15, 15.30–17 and 17.30–19. Between slots the staff tidy up and let the next group in, so buy for a slot you can make from the start — turn up near the end of one and you've paid for time that's almost gone. Public holidays 9.30–17. About 15 min by bike from Nørrebro. No own food inside, but there's a café in the centre.",
+   web:'https://grondalmulticenter.kk.dk/faciliteter/legeland', indoor:true, price:'paid',
+   hours:[[480,1140],[480,1140],[480,1140],[480,1140],[480,1140],[480,1140],[480,1140]]},
+  {n:'Lørdagsleg – åben hal, Grøndal MultiCenter', n_en:'Saturday open gym – Grøndal MultiCenter', cat:'sport', added:'2026-09-22', lat:55.70039, lng:12.51594, adr:'Hvidkildevej 64, København NV',
+   note:'Gefions åbne gymnastikhal (hal 19/20) lørdag morgen kl. 8–9 og 9–10 (i juli 8.30–10) — endnu ikke prøvet. Fælles opvarmning og derefter fri leg på redskaberne for børn i følge med en voksen. Drop-in 45 kr. pr. barn pr. time via MobilePay i døren (voksne gratis), ingen tilmelding — eller halvårskort. Aflyses nogle lørdage pga. stævner, så tjek Gefions Facebook inden. Sæsonstart 1. september.',
+   note_en:"Gefion's open gymnastics hall (hall 19/20) on Saturday mornings, 8–9 and 9–10 (8.30–10 in July) — not tried yet. Group warm-up, then free play on the equipment for children accompanied by an adult. Drop-in 45 kr per child per hour by MobilePay at the door (adults free), no sign-up needed — or a half-year pass. Some Saturdays are cancelled for competitions, so check Gefion's Facebook first. Season starts 1 September.",
+   web:'https://gymgefion.dk/team/168', hoursUrl:'https://gymgefion.dk/team/168', indoor:true, price:'paid',
+   hours:[null,null,null,null,null,null,[480,600]]}
 ];
 const pName = p => (LANG==='en' && p.n_en) ? p.n_en : p.n;
 const pNote = p => (LANG==='en' && p.note_en) ? p.note_en : p.note;
@@ -1202,7 +1213,7 @@ function todayHours(p){
   return t ? T().today(fmt(t[0]),fmt(t[1])) : T().closedToday;
 }
 function mapsLink(p){return 'https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng;}
-function hoursLink(p){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.n+', '+p.adr);}
+function hoursLink(p){return p.hoursUrl || 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.n+', '+p.adr);}
 function haversine(la1,lo1,la2,lo2){
   const R=6371000,r=Math.PI/180;
   const dLa=(la2-la1)*r, dLo=(lo2-lo1)*r;
